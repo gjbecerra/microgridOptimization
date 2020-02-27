@@ -1,0 +1,126 @@
+GAMS 28.2.0  r750fa45 Released Aug 19, 2019 WEX-WEI x86 64bit/MS Windows 09/05/19 16:01:07 Page 1
+Despacho Microred con DR .$
+C o m p i l a t i o n
+
+
+       
+      Despahco de Microred con microturbina, solar y baterias con DR
+       
+   7   
+   8  sets
+   9       t franja horaria /t1*t24/            ;
+  10   
+  11  table datos(*,*) 'Datos de generadores'
+  12  *  dummy,  costo, Pmin,  Pmax
+  13  *  MicroT
+  14  *  Bat
+  16  $include tabladatosURED.csv
+****                            $282
+  18  display datos;
+****  $463
+  19   
+  20  scalar PNOM Potencia nominal de baterias /20/;
+  21   
+  22  table DyPV(t,*) 'demanda de cada franja horaria'
+  23  * dummy,dem,PV,Cbolsa
+  25  *$include DemandayPV24DR.csv
+  26  $include DemandayPV24DRGEO.csv
+****                               $282
+  27  *$include DemandayPV24DRGEO2.csv
+  29  display DyPV;
+****  $463
+  30   
+  31  variables
+  32      costo costo del despacho
+  33      Pred(t) Potencia entregada por la red
+  34      PmicroT(t) Potencia generada por la uturbina
+  35      PbatCh(t) Potencia de carga de la bateria
+  36      PbatDCh(t) Potencia de descarga de la bateria
+  37      Ebat(t) energia almacenada en la bateria
+  38      Cut1(t) Demanda del corte 1
+  39      Cut2(t) Demanda del corte 2
+  40      Cut3(t) Demanda del corte 3
+  41      CutCom(t) Complemento de la energia de los cortes;
+  42      Pred.up(t)=50;
+  43      Pred.lo(t)=0;
+  44      pMicroT.up(t)=datos('MicroT','Pmax');
+****                                 $116   $116
+  45      PmicroT.lo(t)=0;
+  46      PbatCh.up(t)=PNOM*datos('Bat','Pmax');
+****                                  $116
+  47      PbatCh.lo(t)=0*datos('Bat','Pmin');
+****                                      $116
+  48      PbatDCh.up(t)=PNOM*datos('Bat','Pmax');
+  49      PbatDCh.lo(t)=0*datos('Bat','Pmin');
+  50      Ebat.up(t)=0.8*PNOM*5;
+  51      Ebat.lo(t)=0.2*PNOM*5;
+  52      Cut1.up(t)=0.1*DyPV(t,'dem');
+****                                $116
+  53      Cut1.lo(t)=0;
+  54      Cut2.up(t)=(0.1)*DyPV(t,'dem');
+  55      Cut2.lo(t)=0;
+  56      Cut3.up(t)=(0.10)*DyPV(t,'dem');
+  57      Cut3.lo(t)=0;
+  58  *    CutCom.up(t)=0.5*DyPV(t,'dem');
+  59      CutCom.lo(t)=0;
+  60   
+  61  display Pred.up;
+  62  display PmicroT.up;
+  63  display PbatCh.up,PbatCh.lo;
+  64   
+  65  equations
+  66     FO funcion objetivo
+  67     bal(t) balance de potencia
+  68     Et1(t) carga de bateria
+  69     Edesplazada Balance de Energia debido a DR
+  70     Einifin Energia inicial y final de bateria;
+  71     FO.. costo =e= sum(t,DyPV(t,'Cbolsa')*Pred(t)+500*PmicroT(t)+1*(38*Cut1
+      (t)+56*Cut2(t)+114*Cut3(t)));
+  72     bal(t).. Pred(t)-PbatCh(t)+PbatDCh(t)+PmicroT(t)+(25/20)*DyPV(t,'PV')-D
+      yPV(t,'dem')+1*(Cut1(t)+Cut2(t)+Cut3(t))-CutCom(t) =e= 0;
+  73     Et1(t)$(ord(t) gt 1) .. Ebat(t)=e=Ebat(t-1)+0.95*PbatCh(t-1)-PbatDCh(t-
+      1)/0.95;
+  74     Einifin .. Ebat('t1')=e=Ebat('t24');
+  75     Edesplazada.. sum(t,Cut1(t)+Cut2(t)+Cut3(t))=e=sum(t,CutCom(t));
+  76  *   Et1(t)$(ord(t) gt 1) .. Ebat(t+1)=e=Ebat(t)+Pbat(t);
+  77  *   Et1(t)..
+  78   
+  79  model DespachoMicroRed /all/;
+  80  solve DespachoMicroRed minimizing costo using lp;
+****                                                  $257
+  81  display Ebat.l,Pred.l
+  82  execute_unload "results.gdx"  Ebat
+  83  execute 'gdxxrw.exe results.gdx var=Ebat.L'
+  84  *execute 'gdxxrw.exe results.gdx var=Pred.L'
+  85  *execute 'gdxxrw.exe results.gdx var=Pred.L range=A3:R24'
+  86   
+  87   
+  88   
+GAMS 28.2.0  r750fa45 Released Aug 19, 2019 WEX-WEI x86 64bit/MS Windows 09/05/19 16:01:07 Page 2
+Despacho Microred con DR .$
+Error Messages
+
+
+116  Label is unknown
+257  Solve statement not checked because of previous errors
+282  Unable to open include file
+463  The column section in the previous table is missing
+
+**** 10 ERROR(S)   0 WARNING(S)
+
+
+COMPILATION TIME     =        0.109 SECONDS      3 MB  28.2.0 r750fa45 WEX-WEI
+
+
+USER: GAMS Development Corporation, USA              G871201/0000CA-ANY
+      Free Demo, +1 202-342-0180, support@gams.com, www.gams.com DC0000
+
+
+**** FILE SUMMARY
+
+Input      C:\Users\carlosa-correaf\Google Drive\DR\DRuRed\MicrogridDespacho3DR.
+           gms
+Output     C:\Users\carlosa-correaf\Documents\gamsdir\projdir\MicrogridDespacho3
+           DR.lst
+
+**** USER ERROR(S) ENCOUNTERED

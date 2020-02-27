@@ -1,0 +1,45 @@
+B 3 C o m p i l a t i o n
+B 121 Include File Summary
+B 137 E x e c u t i o n
+I 137 datos
+I 146 DyPV
+I 176 Pred
+I 185 PmicroT
+I 194 PbatCh
+I 203 PbatCh
+B 214 Equation Listing    SOLVE DespachoMicroRed Using LP From line 108
+D 217 FO
+D 278 bal
+D 301 Et1
+D 318 Edesplazada
+D 355 Einifin
+B 361 Column Listing      SOLVE DespachoMicroRed Using LP From line 108
+E 364 costo
+E 371 Pred
+E 390 PmicroT
+E 409 PbatCh
+E 428 PbatDCh
+E 447 Ebat
+E 469 Cut1
+E 491 Cut2
+E 513 Cut3
+E 535 CutCom
+B 555 Model Statistics    SOLVE DespachoMicroRed Using LP From line 108
+B 571 Solution Report     SOLVE DespachoMicroRed Using LP From line 108
+F 600 FO
+F 604 bal
+F 633 Et1
+F 663 Edesplazada
+F 664 Einifin
+G 671 costo
+G 675 Pred
+G 704 PmicroT
+G 733 PbatCh
+G 762 PbatDCh
+G 791 Ebat
+G 820 Cut1
+G 849 Cut2
+G 878 Cut3
+G 907 CutCom
+B 942 E x e c u t i o n
+I 942 Ebat

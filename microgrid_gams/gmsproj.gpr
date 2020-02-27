@@ -1,0 +1,17 @@
+[RP:MICROGRIDDESPACHO3DR]
+1=
+
+[RP:MICROGRIDDESPACHO3NODR]
+1=
+
+[OPENWINDOW_1]
+FILE0=C:\Users\carlosa-correaf\Documents\gamsdir\projdir\MicrogridDespacho3DR.lst
+FILE1=C:\Users\carlosa-correaf\Documents\gamsdir\projdir\MicrogridDespacho3NODR.lst
+FILE2=C:\Users\carlosa-correaf\Google Drive\DR\DRuRed\MicrogridDespacho3DR.gms
+FILE3=C:\Users\carlosa-correaf\Google Drive\DR\DRuRed\MicrogridDespacho3NODR.gms
+FILE4=C:\Users\carlosa-correaf\Documents\gamsdir\projdir\MicrogridDespacho3NODR.lst
+MAXIM=0
+TOP=0
+LEFT=0
+HEIGHT=513
+WIDTH=910

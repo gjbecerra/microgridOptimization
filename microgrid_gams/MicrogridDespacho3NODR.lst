@@ -1,0 +1,955 @@
+GAMS 28.2.0  r750fa45 Released Aug 19, 2019 LEX-LEG x86 64bit/Linux                                                                                                                                                                    09/29/19 13:21:16 Page 1
+Despacho Microred con DR .$
+C o m p i l a t i o n
+
+
+       
+      Despahco de Microred con microturbina, solar y baterias con DR
+       
+   7   
+   8  sets
+   9       t franja horaria /t1*t24/            ;
+  10   
+  11  table datos(*,*) 'Datos de generadores'
+  12  *  dummy,  costo, Pmin,  Pmax
+  13  *  MicroT
+  14  *  Bat
+INCLUDE    /home/gbecerra/Javeriana/Research/ProyectoAlmacenamiento/microgrid_gams/tabladatosURED.csv
+  17  dummy,  costo, Pmin,  Pmax
+  18  MicroT,  500,  0,  10
+  19  Bat,     0  ,  -1, 1
+  21  display datos;
+  22   
+  23  scalar PNOM Potencia nominal de baterias /20/;
+  24  display PNOM;
+  25   
+  26  table DyPV(t,*) 'demanda de cada franja horaria'
+  27  * dummy,dem,PV,Cbolsa
+  29  * $include DemandayPV24DR.csv
+INCLUDE    /home/gbecerra/Javeriana/Research/ProyectoAlmacenamiento/microgrid_gams/DemandayPV24DRGEO.csv
+  31  dummy,dem,PV,Cbolsa
+  32  t1,21.0859,0,178
+  33  t2,20.2583,0,172
+  34  t3,20.1845,0,165
+  35  t4,20.8013,0,162
+  36  t5,24.4333,0,166
+  37  t6,29.1144,5.1764,176
+  38  t7,28.3289,10 ,186
+  39  t8,28.6716,14.1421,196
+  40  t9,30.9647,17.3205,206
+  41  t10,31.9663,19.3185,216
+  42  t11,32.3142,20.0000,225
+  43  t12,33.5899,19.3185,235
+  44  t13,33.5741,17.3205,225
+  45  t14,32.0032,14.1421,230
+  46  t15,30.8171,10.0000,232
+  47  t16,31.3337,5.1764,230
+  48  t17,31.0859,0,220
+  49  t18,33.3210,0,204
+  50  t19,48.2341,0,229
+  51  t20,50.0000,0,253
+  52  t21,44.3437,0,238
+  53  t22,34.3384,0,224
+  54  t23,29.0459,0,208
+  55  t24,24.1434,0,193
+  56  * $include DemandayPV24DRGEO2.csv
+  58  display DyPV;
+  59   
+  60  variables
+GAMS 28.2.0  r750fa45 Released Aug 19, 2019 LEX-LEG x86 64bit/Linux                                                                                                                                                                    09/29/19 13:21:16 Page 2
+Despacho Microred con DR .$
+C o m p i l a t i o n
+
+
+  61      costo costo del despacho
+  62      Pred(t) Potencia entregada por la red
+  63      PmicroT(t) Potencia generada por la uturbina
+  64      PbatCh(t) Potencia de carga de la bateria
+  65      PbatDCh(t) Potencia de descarga de la bateria
+  66      Ebat(t) energia almacenada en la bateria
+  67      Cut1(t) Demanda del corte 1
+  68      Cut2(t) Demanda del corte 2
+  69      Cut3(t) Demanda del corte 3
+  70      CutCom(t) Complemento de la energia de los cortes;
+  71      Pred.up(t)=50;
+  72      Pred.lo(t)=0;
+  73      pMicroT.up(t)=datos('MicroT','Pmax');
+  74      PmicroT.lo(t)=0;
+  75      PbatCh.up(t)=PNOM*datos('Bat','Pmax');
+  76      PbatCh.lo(t)=0*datos('Bat','Pmin');
+  77      PbatDCh.up(t)=PNOM*datos('Bat','Pmax');
+  78      PbatDCh.lo(t)=0*datos('Bat','Pmin');
+  79      Ebat.up(t)=0.8*PNOM*5;
+  80      Ebat.lo(t)=0.2*PNOM*5;
+  81      Cut1.up(t)=0*0.1*DyPV(t,'dem');
+  82      Cut1.lo(t)=0;
+  83      Cut2.up(t)=0*(0.1)*DyPV(t,'dem');
+  84      Cut2.lo(t)=0;
+  85      Cut3.up(t)=0*(0.10)*DyPV(t,'dem');
+  86      Cut3.lo(t)=0;
+  87  *    CutCom.up(t)=0.5*DyPV(t,'dem');
+  88      CutCom.lo(t)=0;
+  89   
+  90  display Pred.up;
+  91  display PmicroT.up;
+  92  display PbatCh.up,PbatCh.lo;
+  93   
+  94  equations
+  95     FO funcion objetivo
+  96     bal(t) balance de potencia
+  97     Et1(t) carga de bateria
+  98     Edesplazada Balance de Energia debido a DR
+  99     Einifin Energia inicial y final de bateria;
+ 100     FO.. costo =e= sum(t,DyPV(t,'Cbolsa')*Pred(t)+500*PmicroT(t)+1*(38*Cut1(t)+56*Cut2(t)+114*Cut3(t)));
+ 101     bal(t).. Pred(t)-PbatCh(t)+PbatDCh(t)+PmicroT(t)+(25/20)*DyPV(t,'PV')-DyPV(t,'dem')+1*(Cut1(t)+Cut2(t)+Cut3(t))-CutCom(t) =e= 0;
+ 102     Et1(t)$(ord(t) gt 1) .. Ebat(t)=e=Ebat(t-1)+0.95*PbatCh(t-1)-PbatDCh(t-1)/0.95;
+ 103     Einifin .. Ebat('t1')=e=Ebat('t24');
+ 104     Edesplazada.. sum(t,Cut1(t)+Cut2(t)+Cut3(t))=e=sum(t,CutCom(t));
+ 105  *   Et1(t)$(ord(t) gt 1) .. Ebat(t+1)=e=Ebat(t)+Pbat(t);
+ 106  *   Et1(t)..
+ 107   
+ 108  model DespachoMicroRed /all/;
+ 109  solve DespachoMicroRed minimizing costo using lp;
+ 110  display Ebat.l
+ 111  execute_unload "results.gdx"  Ebat
+ 112  execute 'gdxxrw.exe results.gdx var=Ebat.L'
+ 113  *execute 'gdxxrw.exe results.gdx var=Pred.L'
+GAMS 28.2.0  r750fa45 Released Aug 19, 2019 LEX-LEG x86 64bit/Linux                                                                                                                                                                    09/29/19 13:21:16 Page 3
+Despacho Microred con DR .$
+C o m p i l a t i o n
+
+
+ 114  *execute 'gdxxrw.exe results.gdx var=Pred.L range=A3:R24'
+ 115   
+ 116   
+ 117   
+GAMS 28.2.0  r750fa45 Released Aug 19, 2019 LEX-LEG x86 64bit/Linux                                                                                                                                                                    09/29/19 13:21:16 Page 4
+Despacho Microred con DR .$
+Include File Summary
+
+
+   SEQ   GLOBAL TYPE      PARENT   LOCAL  FILENAME
+
+     1        1 INPUT          0       0  /home/gbecerra/Javeriana/Research/ProyectoAlmacenamiento/microgrid_gams/MicrogridDespacho3NODR.gms
+     2       16 INCLUDE        1      16  ./home/gbecerra/Javeriana/Research/ProyectoAlmacenamiento/microgrid_gams/tabladatosURED.csv
+     3       30 INCLUDE        1      27  ./home/gbecerra/Javeriana/Research/ProyectoAlmacenamiento/microgrid_gams/DemandayPV24DRGEO.csv
+
+
+COMPILATION TIME     =        0.001 SECONDS      3 MB  28.2.0 r750fa45 LEX-LEG
+GAMS 28.2.0  r750fa45 Released Aug 19, 2019 LEX-LEG x86 64bit/Linux                                                                                                                                                                    09/29/19 13:21:16 Page 5
+Despacho Microred con DR .$
+E x e c u t i o n
+
+
+----     21 PARAMETER datos  Datos de generadores
+
+             costo        Pmin        Pmax
+
+MicroT     500.000                  10.000
+Bat                     -1.000       1.000
+
+
+----     24 PARAMETER PNOM                 =       20.000  Potencia nominal de baterias
+
+----     58 PARAMETER DyPV  demanda de cada franja horaria
+
+            dem          PV      Cbolsa
+
+t1       21.086                 178.000
+t2       20.258                 172.000
+t3       20.184                 165.000
+t4       20.801                 162.000
+t5       24.433                 166.000
+t6       29.114       5.176     176.000
+t7       28.329      10.000     186.000
+t8       28.672      14.142     196.000
+t9       30.965      17.320     206.000
+t10      31.966      19.318     216.000
+t11      32.314      20.000     225.000
+t12      33.590      19.318     235.000
+t13      33.574      17.320     225.000
+t14      32.003      14.142     230.000
+t15      30.817      10.000     232.000
+t16      31.334       5.176     230.000
+t17      31.086                 220.000
+t18      33.321                 204.000
+t19      48.234                 229.000
+t20      50.000                 253.000
+t21      44.344                 238.000
+t22      34.338                 224.000
+t23      29.046                 208.000
+t24      24.143                 193.000
+
+
+----     90 VARIABLE Pred.Up (+INF) Potencia entregada por la red
+
+t1  50.000,    t2  50.000,    t3  50.000,    t4  50.000,    t5  50.000,    t6  50.000,    t7  50.000,    t8  50.000,    t9  50.000,    t10 50.000,    t11 50.000,    t12 50.000,    t13 50.000,    t14 50.000,    t15 50.000,    t16 50.000,    t17 50.000
+t18 50.000,    t19 50.000,    t20 50.000,    t21 50.000,    t22 50.000,    t23 50.000,    t24 50.000
+
+
+----     91 VARIABLE PmicroT.Up (+INF) Potencia generada por la uturbina
+
+t1  10.000,    t2  10.000,    t3  10.000,    t4  10.000,    t5  10.000,    t6  10.000,    t7  10.000,    t8  10.000,    t9  10.000,    t10 10.000,    t11 10.000,    t12 10.000,    t13 10.000,    t14 10.000,    t15 10.000,    t16 10.000,    t17 10.000
+t18 10.000,    t19 10.000,    t20 10.000,    t21 10.000,    t22 10.000,    t23 10.000,    t24 10.000
+
+GAMS 28.2.0  r750fa45 Released Aug 19, 2019 LEX-LEG x86 64bit/Linux                                                                                                                                                                    09/29/19 13:21:16 Page 6
+Despacho Microred con DR .$
+E x e c u t i o n
+
+
+----     92 VARIABLE PbatCh.Up (+INF) Potencia de carga de la bateria
+
+t1  20.000,    t2  20.000,    t3  20.000,    t4  20.000,    t5  20.000,    t6  20.000,    t7  20.000,    t8  20.000,    t9  20.000,    t10 20.000,    t11 20.000,    t12 20.000,    t13 20.000,    t14 20.000,    t15 20.000,    t16 20.000,    t17 20.000
+t18 20.000,    t19 20.000,    t20 20.000,    t21 20.000,    t22 20.000,    t23 20.000,    t24 20.000
+
+
+----     92 VARIABLE PbatCh.Lo (-INF) Potencia de carga de la bateria
+
+t1  0.000,    t2  0.000,    t3  0.000,    t4  0.000,    t5  0.000,    t6  0.000,    t7  0.000,    t8  0.000,    t9  0.000,    t10 0.000,    t11 0.000,    t12 0.000,    t13 0.000,    t14 0.000,    t15 0.000,    t16 0.000,    t17 0.000,    t18 0.000
+t19 0.000,    t20 0.000,    t21 0.000,    t22 0.000,    t23 0.000,    t24 0.000
+
+GAMS 28.2.0  r750fa45 Released Aug 19, 2019 LEX-LEG x86 64bit/Linux                                                                                                                                                                    09/29/19 13:21:16 Page 7
+Despacho Microred con DR .$
+Equation Listing    SOLVE DespachoMicroRed Using LP From line 109
+
+
+---- FO  =E=  funcion objetivo
+
+FO..  costo - 178*Pred(t1) - 172*Pred(t2) - 165*Pred(t3) - 162*Pred(t4) - 166*Pred(t5) - 176*Pred(t6) - 186*Pred(t7) - 196*Pred(t8) - 206*Pred(t9) - 216*Pred(t10) - 225*Pred(t11) - 235*Pred(t12) - 225*Pred(t13) - 230*Pred(t14) - 232*Pred(t15)
+     
+      - 230*Pred(t16) - 220*Pred(t17) - 204*Pred(t18) - 229*Pred(t19) - 253*Pred(t20) - 238*Pred(t21) - 224*Pred(t22) - 208*Pred(t23) - 193*Pred(t24) - 500*PmicroT(t1) - 500*PmicroT(t2) - 500*PmicroT(t3) - 500*PmicroT(t4) - 500*PmicroT(t5)
+     
+      - 500*PmicroT(t6) - 500*PmicroT(t7) - 500*PmicroT(t8) - 500*PmicroT(t9) - 500*PmicroT(t10) - 500*PmicroT(t11) - 500*PmicroT(t12) - 500*PmicroT(t13) - 500*PmicroT(t14) - 500*PmicroT(t15) - 500*PmicroT(t16) - 500*PmicroT(t17) - 500*PmicroT(t18)
+     
+      - 500*PmicroT(t19) - 500*PmicroT(t20) - 500*PmicroT(t21) - 500*PmicroT(t22) - 500*PmicroT(t23) - 500*PmicroT(t24) - 38*Cut1(t1) - 38*Cut1(t2) - 38*Cut1(t3) - 38*Cut1(t4) - 38*Cut1(t5) - 38*Cut1(t6) - 38*Cut1(t7) - 38*Cut1(t8) - 38*Cut1(t9)
+     
+      - 38*Cut1(t10) - 38*Cut1(t11) - 38*Cut1(t12) - 38*Cut1(t13) - 38*Cut1(t14) - 38*Cut1(t15) - 38*Cut1(t16) - 38*Cut1(t17) - 38*Cut1(t18) - 38*Cut1(t19) - 38*Cut1(t20) - 38*Cut1(t21) - 38*Cut1(t22) - 38*Cut1(t23) - 38*Cut1(t24) - 56*Cut2(t1)
+     
+      - 56*Cut2(t2) - 56*Cut2(t3) - 56*Cut2(t4) - 56*Cut2(t5) - 56*Cut2(t6) - 56*Cut2(t7) - 56*Cut2(t8) - 56*Cut2(t9) - 56*Cut2(t10) - 56*Cut2(t11) - 56*Cut2(t12) - 56*Cut2(t13) - 56*Cut2(t14) - 56*Cut2(t15) - 56*Cut2(t16) - 56*Cut2(t17) - 56*Cut2(t18)
+     
+      - 56*Cut2(t19) - 56*Cut2(t20) - 56*Cut2(t21) - 56*Cut2(t22) - 56*Cut2(t23) - 56*Cut2(t24) - 114*Cut3(t1) - 114*Cut3(t2) - 114*Cut3(t3) - 114*Cut3(t4) - 114*Cut3(t5) - 114*Cut3(t6) - 114*Cut3(t7) - 114*Cut3(t8) - 114*Cut3(t9) - 114*Cut3(t10)
+     
+      - 114*Cut3(t11) - 114*Cut3(t12) - 114*Cut3(t13) - 114*Cut3(t14) - 114*Cut3(t15) - 114*Cut3(t16) - 114*Cut3(t17) - 114*Cut3(t18) - 114*Cut3(t19) - 114*Cut3(t20) - 114*Cut3(t21) - 114*Cut3(t22) - 114*Cut3(t23) - 114*Cut3(t24) =E= 0 ; (LHS = 0)
+     
+
+---- bal  =E=  balance de potencia
+
+bal(t1)..  Pred(t1) + PmicroT(t1) - PbatCh(t1) + PbatDCh(t1) + Cut1(t1) + Cut2(t1) + Cut3(t1) - CutCom(t1) =E= 21.0859 ; (LHS = 0, INFES = 21.0859 ****)
+     
+bal(t2)..  Pred(t2) + PmicroT(t2) - PbatCh(t2) + PbatDCh(t2) + Cut1(t2) + Cut2(t2) + Cut3(t2) - CutCom(t2) =E= 20.2583 ; (LHS = 0, INFES = 20.2583 ****)
+     
+bal(t3)..  Pred(t3) + PmicroT(t3) - PbatCh(t3) + PbatDCh(t3) + Cut1(t3) + Cut2(t3) + Cut3(t3) - CutCom(t3) =E= 20.1845 ; (LHS = 0, INFES = 20.1845 ****)
+     
+REMAINING 21 ENTRIES SKIPPED
+
+
+---- Et1  =E=  carga de bateria
+
+Et1(t2)..  - 0.95*PbatCh(t1) + 1.05263157894737*PbatDCh(t1) - Ebat(t1) + Ebat(t2) =E= 0 ; (LHS = 0)
+     
+Et1(t3)..  - 0.95*PbatCh(t2) + 1.05263157894737*PbatDCh(t2) - Ebat(t2) + Ebat(t3) =E= 0 ; (LHS = 0)
+     
+Et1(t4)..  - 0.95*PbatCh(t3) + 1.05263157894737*PbatDCh(t3) - Ebat(t3) + Ebat(t4) =E= 0 ; (LHS = 0)
+     
+REMAINING 20 ENTRIES SKIPPED
+
+
+---- Edesplazada  =E=  Balance de Energia debido a DR
+
+Edesplazada..  Cut1(t1) + Cut1(t2) + Cut1(t3) + Cut1(t4) + Cut1(t5) + Cut1(t6) + Cut1(t7) + Cut1(t8) + Cut1(t9) + Cut1(t10) + Cut1(t11) + Cut1(t12) + Cut1(t13) + Cut1(t14) + Cut1(t15) + Cut1(t16) + Cut1(t17) + Cut1(t18) + Cut1(t19) + Cut1(t20) + Cut1(t21)
+     
+      + Cut1(t22) + Cut1(t23) + Cut1(t24) + Cut2(t1) + Cut2(t2) + Cut2(t3) + Cut2(t4) + Cut2(t5) + Cut2(t6) + Cut2(t7) + Cut2(t8) + Cut2(t9) + Cut2(t10) + Cut2(t11) + Cut2(t12) + Cut2(t13) + Cut2(t14) + Cut2(t15) + Cut2(t16) + Cut2(t17) + Cut2(t18)
+     
+      + Cut2(t19) + Cut2(t20) + Cut2(t21) + Cut2(t22) + Cut2(t23) + Cut2(t24) + Cut3(t1) + Cut3(t2) + Cut3(t3) + Cut3(t4) + Cut3(t5) + Cut3(t6) + Cut3(t7) + Cut3(t8) + Cut3(t9) + Cut3(t10) + Cut3(t11) + Cut3(t12) + Cut3(t13) + Cut3(t14) + Cut3(t15)
+     
+      + Cut3(t16) + Cut3(t17) + Cut3(t18) + Cut3(t19) + Cut3(t20) + Cut3(t21) + Cut3(t22) + Cut3(t23) + Cut3(t24) - CutCom(t1) - CutCom(t2) - CutCom(t3) - CutCom(t4) - CutCom(t5) - CutCom(t6) - CutCom(t7) - CutCom(t8) - CutCom(t9) - CutCom(t10)
+     
+      - CutCom(t11) - CutCom(t12) - CutCom(t13) - CutCom(t14) - CutCom(t15) - CutCom(t16) - CutCom(t17) - CutCom(t18) - CutCom(t19) - CutCom(t20) - CutCom(t21) - CutCom(t22) - CutCom(t23) - CutCom(t24) =E= 0 ; (LHS = 0)
+     
+GAMS 28.2.0  r750fa45 Released Aug 19, 2019 LEX-LEG x86 64bit/Linux                                                                                                                                                                    09/29/19 13:21:16 Page 8
+Despacho Microred con DR .$
+Equation Listing    SOLVE DespachoMicroRed Using LP From line 109
+
+
+---- Einifin  =E=  Energia inicial y final de bateria
+
+Einifin..  Ebat(t1) - Ebat(t24) =E= 0 ; (LHS = 0)
+     
+GAMS 28.2.0  r750fa45 Released Aug 19, 2019 LEX-LEG x86 64bit/Linux                                                                                                                                                                    09/29/19 13:21:16 Page 9
+Despacho Microred con DR .$
+Column Listing      SOLVE DespachoMicroRed Using LP From line 109
+
+
+---- costo  costo del despacho
+
+costo
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+        1       FO
+
+
+---- Pred  Potencia entregada por la red
+
+Pred(t1)
+                (.LO, .L, .UP, .M = 0, 0, 50, 0)
+     -178       FO
+        1       bal(t1)
+
+Pred(t2)
+                (.LO, .L, .UP, .M = 0, 0, 50, 0)
+     -172       FO
+        1       bal(t2)
+
+Pred(t3)
+                (.LO, .L, .UP, .M = 0, 0, 50, 0)
+     -165       FO
+        1       bal(t3)
+
+REMAINING 21 ENTRIES SKIPPED
+
+---- PmicroT  Potencia generada por la uturbina
+
+PmicroT(t1)
+                (.LO, .L, .UP, .M = 0, 0, 10, 0)
+     -500       FO
+        1       bal(t1)
+
+PmicroT(t2)
+                (.LO, .L, .UP, .M = 0, 0, 10, 0)
+     -500       FO
+        1       bal(t2)
+
+PmicroT(t3)
+                (.LO, .L, .UP, .M = 0, 0, 10, 0)
+     -500       FO
+        1       bal(t3)
+
+REMAINING 21 ENTRIES SKIPPED
+
+---- PbatCh  Potencia de carga de la bateria
+
+PbatCh(t1)
+                (.LO, .L, .UP, .M = 0, 0, 20, 0)
+       -1       bal(t1)
+       -0.95    Et1(t2)
+
+PbatCh(t2)
+GAMS 28.2.0  r750fa45 Released Aug 19, 2019 LEX-LEG x86 64bit/Linux                                                                                                                                                                   09/29/19 13:21:16 Page 10
+Despacho Microred con DR .$
+Column Listing      SOLVE DespachoMicroRed Using LP From line 109
+
+
+     PbatCh  Potencia de carga de la bateria
+
+                (.LO, .L, .UP, .M = 0, 0, 20, 0)
+       -1       bal(t2)
+       -0.95    Et1(t3)
+
+PbatCh(t3)
+                (.LO, .L, .UP, .M = 0, 0, 20, 0)
+       -1       bal(t3)
+       -0.95    Et1(t4)
+
+REMAINING 21 ENTRIES SKIPPED
+
+---- PbatDCh  Potencia de descarga de la bateria
+
+PbatDCh(t1)
+                (.LO, .L, .UP, .M = 0, 0, 20, 0)
+        1       bal(t1)
+        1.0526  Et1(t2)
+
+PbatDCh(t2)
+                (.LO, .L, .UP, .M = 0, 0, 20, 0)
+        1       bal(t2)
+        1.0526  Et1(t3)
+
+PbatDCh(t3)
+                (.LO, .L, .UP, .M = 0, 0, 20, 0)
+        1       bal(t3)
+        1.0526  Et1(t4)
+
+REMAINING 21 ENTRIES SKIPPED
+
+---- Ebat  energia almacenada en la bateria
+
+Ebat(t1)
+                (.LO, .L, .UP, .M = 20, 20, 80, 0)
+       -1       Et1(t2)
+        1       Einifin
+        0       (OLD LEVEL ****)
+
+Ebat(t2)
+                (.LO, .L, .UP, .M = 20, 20, 80, 0)
+        1       Et1(t2)
+       -1       Et1(t3)
+        0       (OLD LEVEL ****)
+
+Ebat(t3)
+                (.LO, .L, .UP, .M = 20, 20, 80, 0)
+        1       Et1(t3)
+       -1       Et1(t4)
+        0       (OLD LEVEL ****)
+
+REMAINING 21 ENTRIES SKIPPED
+GAMS 28.2.0  r750fa45 Released Aug 19, 2019 LEX-LEG x86 64bit/Linux                                                                                                                                                                   09/29/19 13:21:16 Page 11
+Despacho Microred con DR .$
+Column Listing      SOLVE DespachoMicroRed Using LP From line 109
+
+
+---- Cut1  Demanda del corte 1
+
+Cut1(t1)
+                (.LO, .L, .UP, .M = 0, 0, 0, 0)
+      -38       FO
+        1       bal(t1)
+        1       Edesplazada
+
+Cut1(t2)
+                (.LO, .L, .UP, .M = 0, 0, 0, 0)
+      -38       FO
+        1       bal(t2)
+        1       Edesplazada
+
+Cut1(t3)
+                (.LO, .L, .UP, .M = 0, 0, 0, 0)
+      -38       FO
+        1       bal(t3)
+        1       Edesplazada
+
+REMAINING 21 ENTRIES SKIPPED
+
+---- Cut2  Demanda del corte 2
+
+Cut2(t1)
+                (.LO, .L, .UP, .M = 0, 0, 0, 0)
+      -56       FO
+        1       bal(t1)
+        1       Edesplazada
+
+Cut2(t2)
+                (.LO, .L, .UP, .M = 0, 0, 0, 0)
+      -56       FO
+        1       bal(t2)
+        1       Edesplazada
+
+Cut2(t3)
+                (.LO, .L, .UP, .M = 0, 0, 0, 0)
+      -56       FO
+        1       bal(t3)
+        1       Edesplazada
+
+REMAINING 21 ENTRIES SKIPPED
+
+---- Cut3  Demanda del corte 3
+
+Cut3(t1)
+                (.LO, .L, .UP, .M = 0, 0, 0, 0)
+     -114       FO
+        1       bal(t1)
+        1       Edesplazada
+
+Cut3(t2)
+GAMS 28.2.0  r750fa45 Released Aug 19, 2019 LEX-LEG x86 64bit/Linux                                                                                                                                                                   09/29/19 13:21:16 Page 12
+Despacho Microred con DR .$
+Column Listing      SOLVE DespachoMicroRed Using LP From line 109
+
+
+     Cut3  Demanda del corte 3
+
+                (.LO, .L, .UP, .M = 0, 0, 0, 0)
+     -114       FO
+        1       bal(t2)
+        1       Edesplazada
+
+Cut3(t3)
+                (.LO, .L, .UP, .M = 0, 0, 0, 0)
+     -114       FO
+        1       bal(t3)
+        1       Edesplazada
+
+REMAINING 21 ENTRIES SKIPPED
+
+---- CutCom  Complemento de la energia de los cortes
+
+CutCom(t1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1       bal(t1)
+       -1       Edesplazada
+
+CutCom(t2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1       bal(t2)
+       -1       Edesplazada
+
+CutCom(t3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1       bal(t3)
+       -1       Edesplazada
+
+REMAINING 21 ENTRIES SKIPPED
+GAMS 28.2.0  r750fa45 Released Aug 19, 2019 LEX-LEG x86 64bit/Linux                                                                                                                                                                   09/29/19 13:21:16 Page 13
+Despacho Microred con DR .$
+Model Statistics    SOLVE DespachoMicroRed Using LP From line 109
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           5     SINGLE EQUATIONS           50
+BLOCKS OF VARIABLES          10     SINGLE VARIABLES          217  24 projected
+NON ZERO ELEMENTS           503
+
+
+GENERATION TIME      =        0.002 SECONDS      4 MB  28.2.0 r750fa45 LEX-LEG
+
+
+EXECUTION TIME       =        0.002 SECONDS      4 MB  28.2.0 r750fa45 LEX-LEG
+GAMS 28.2.0  r750fa45 Released Aug 19, 2019 LEX-LEG x86 64bit/Linux                                                                                                                                                                   09/29/19 13:21:16 Page 14
+Despacho Microred con DR .$
+Solution Report     SOLVE DespachoMicroRed Using LP From line 109
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   DespachoMicroRed    OBJECTIVE  costo
+     TYPE    LP                  DIRECTION  MINIMIZE
+     SOLVER  CPLEX               FROM LINE  109
+
+**** SOLVER STATUS     1 Normal Completion         
+**** MODEL STATUS      1 Optimal                   
+**** OBJECTIVE VALUE           109444.4282
+
+ RESOURCE USAGE, LIMIT          0.024      1000.000
+ ITERATION COUNT, LIMIT        18    2000000000
+
+IBM ILOG CPLEX   28.2.0 r750fa45 Released Aug 19, 2019 LEG x86 64bit/Linux    
+Cplex 12.9.0.0
+
+Space for names approximately 0.00 Mb
+Use option 'names no' to turn use of names off
+LP status(1): optimal
+Cplex Time: 0.00sec (det. 0.23 ticks)
+Optimal solution found.
+Objective :      109444.428195
+
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU FO                  .              .              .             1.0000      
+
+  FO  funcion objetivo
+
+---- EQU bal  balance de potencia
+
+           LOWER          LEVEL          UPPER         MARGINAL
+
+t1         21.0859        21.0859        21.0859       178.0000      
+t2         20.2583        20.2583        20.2583       172.0000      
+t3         20.1845        20.1845        20.1845       165.0000      
+t4         20.8013        20.8013        20.8013       162.0000      
+t5         24.4333        24.4333        24.4333       166.0000      
+t6         22.6439        22.6439        22.6439       176.0000      
+t7         15.8289        15.8289        15.8289       186.0000      
+t8         10.9940        10.9940        10.9940       196.0000      
+t9          9.3141         9.3141         9.3141       206.0000      
+t10         7.8182         7.8182         7.8182       216.0000      
+t11         7.3142         7.3142         7.3142       225.0000      
+t12         9.4418         9.4418         9.4418       230.0000      
+t13        11.9235        11.9235        11.9235       225.0000      
+t14        14.3256        14.3256        14.3256       230.0000      
+t15        18.3171        18.3171        18.3171       230.0000      
+t16        24.8632        24.8632        24.8632       230.0000      
+t17        31.0859        31.0859        31.0859       220.0000      
+t18        33.3210        33.3210        33.3210       207.5750      
+t19        48.2341        48.2341        48.2341       229.0000      
+GAMS 28.2.0  r750fa45 Released Aug 19, 2019 LEX-LEG x86 64bit/Linux                                                                                                                                                                   09/29/19 13:21:16 Page 15
+Despacho Microred con DR .$
+Solution Report     SOLVE DespachoMicroRed Using LP From line 109
+
+
+     EQU bal  balance de potencia
+
+           LOWER          LEVEL          UPPER         MARGINAL
+
+t20        50.0000        50.0000        50.0000       253.0000      
+t21        44.3437        44.3437        44.3437       238.0000      
+t22        34.3384        34.3384        34.3384       224.0000      
+t23        29.0459        29.0459        29.0459       208.0000      
+t24        24.1434        24.1434        24.1434       193.0000      
+
+---- EQU Et1  carga de bateria
+
+           LOWER          LEVEL          UPPER         MARGINAL
+
+t2           .              .              .          -181.0526      
+t3           .              .              .          -181.0526      
+t4           .              .              .          -181.0526      
+t5           .              .              .          -181.0526      
+t6           .              .              .          -181.0526      
+t7           .              .              .          -181.0526      
+t8           .              .              .          -186.2000      
+t9           .              .              .          -186.2000      
+t10          .              .              .          -195.7000      
+t11          .              .              .          -205.2000      
+t12          .              .              .          -213.7500      
+t13          .              .              .          -218.5000      
+t14          .              .              .          -218.5000      
+t15          .              .              .          -218.5000      
+t16          .              .              .          -218.5000      
+t17          .              .              .          -218.5000      
+t18          .              .              .          -218.5000      
+t19          .              .              .          -218.5000      
+t20          .              .              .          -218.5000      
+t21          .              .              .          -218.5000      
+t22          .              .              .          -218.5000      
+t23          .              .              .          -218.5000      
+t24          .              .              .          -218.5000      
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU Edesplaza~          .              .              .              .          
+---- EQU Einifin             .              .              .          -181.0526      
+
+  Edesplazada  Balance de Energia debido a DR
+  Einifin  Energia inicial y final de bateria
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR costo             -INF       109444.4282        +INF             .          
+
+  costo  costo del despacho
+GAMS 28.2.0  r750fa45 Released Aug 19, 2019 LEX-LEG x86 64bit/Linux                                                                                                                                                                   09/29/19 13:21:16 Page 16
+Despacho Microred con DR .$
+Solution Report     SOLVE DespachoMicroRed Using LP From line 109
+
+
+---- VAR Pred  Potencia entregada por la red
+
+           LOWER          LEVEL          UPPER         MARGINAL
+
+t1           .            21.0859        50.0000          .          
+t2           .            23.4162        50.0000          .          
+t3           .            40.1845        50.0000          .          
+t4           .            40.8013        50.0000          .          
+t5           .            44.4333        50.0000          .          
+t6           .            22.6439        50.0000          .          
+t7           .            15.8289        50.0000          .          
+t8           .            10.9940        50.0000          .          
+t9           .             9.3141        50.0000          .          
+t10          .             7.8182        50.0000          .          
+t11          .             7.3142        50.0000          .          
+t12          .              .            50.0000         5.0000      
+t13          .            11.9235        50.0000          .          
+t14          .            14.3256        50.0000          .          
+t15          .              .            50.0000         2.0000      
+t16          .            20.5693        50.0000          .          
+t17          .            31.0859        50.0000          .          
+t18          .            50.0000        50.0000        -3.5750      
+t19          .            48.2341        50.0000          .          
+t20          .            30.0000        50.0000          .          
+t21          .            24.3437        50.0000          .          
+t22          .            34.3384        50.0000          .          
+t23          .            29.0459        50.0000          .          
+t24          .             4.1434        50.0000          .          
+
+---- VAR PmicroT  Potencia generada por la uturbina
+
+           LOWER          LEVEL          UPPER         MARGINAL
+
+t1           .              .            10.0000       322.0000      
+t2           .              .            10.0000       328.0000      
+t3           .              .            10.0000       335.0000      
+t4           .              .            10.0000       338.0000      
+t5           .              .            10.0000       334.0000      
+t6           .              .            10.0000       324.0000      
+t7           .              .            10.0000       314.0000      
+t8           .              .            10.0000       304.0000      
+t9           .              .            10.0000       294.0000      
+t10          .              .            10.0000       284.0000      
+t11          .              .            10.0000       275.0000      
+t12          .              .            10.0000       270.0000      
+t13          .              .            10.0000       275.0000      
+t14          .              .            10.0000       270.0000      
+t15          .              .            10.0000       270.0000      
+t16          .              .            10.0000       270.0000      
+t17          .              .            10.0000       280.0000      
+t18          .              .            10.0000       292.4250      
+t19          .              .            10.0000       271.0000      
+t20          .              .            10.0000       247.0000      
+GAMS 28.2.0  r750fa45 Released Aug 19, 2019 LEX-LEG x86 64bit/Linux                                                                                                                                                                   09/29/19 13:21:16 Page 17
+Despacho Microred con DR .$
+Solution Report     SOLVE DespachoMicroRed Using LP From line 109
+
+
+     VAR PmicroT  Potencia generada por la uturbina
+
+           LOWER          LEVEL          UPPER         MARGINAL
+
+t21          .              .            10.0000       262.0000      
+t22          .              .            10.0000       276.0000      
+t23          .              .            10.0000       292.0000      
+t24          .              .            10.0000       307.0000      
+
+---- VAR PbatCh  Potencia de carga de la bateria
+
+           LOWER          LEVEL          UPPER         MARGINAL
+
+t1           .              .            20.0000         6.0000      
+t2           .             3.1579        20.0000          .          
+t3           .            20.0000        20.0000        -7.0000      
+t4           .            20.0000        20.0000       -10.0000      
+t5           .            20.0000        20.0000        -6.0000      
+t6           .              .            20.0000         4.0000      
+t7           .              .            20.0000         9.1100      
+t8           .              .            20.0000        19.1100      
+t9           .              .            20.0000        20.0850      
+t10          .              .            20.0000        21.0600      
+t11          .              .            20.0000        21.9375      
+t12          .              .            20.0000        22.4250      
+t13          .              .            20.0000        17.4250      
+t14          .              .            20.0000        22.4250      
+t15          .              .            20.0000        22.4250      
+t16          .              .            20.0000        22.4250      
+t17          .              .            20.0000        12.4250      
+t18          .            16.6790        20.0000          .          
+t19          .              .            20.0000        21.4250      
+t20          .              .            20.0000        45.4250      
+t21          .              .            20.0000        30.4250      
+t22          .              .            20.0000        16.4250      
+t23          .              .            20.0000         0.4250      
+t24          .              .            20.0000       193.0000      
+
+---- VAR PbatDCh  Potencia de descarga de la bateria
+
+           LOWER          LEVEL          UPPER         MARGINAL
+
+t1           .              .            20.0000        12.5817      
+t2           .              .            20.0000        18.5817      
+t3           .              .            20.0000        25.5817      
+t4           .              .            20.0000        28.5817      
+t5           .              .            20.0000        24.5817      
+t6           .              .            20.0000        14.5817      
+t7           .              .            20.0000        10.0000      
+t8           .              .            20.0000          .          
+t9           .              .            20.0000          .          
+t10          .              .            20.0000          .          
+t11          .              .            20.0000          .          
+GAMS 28.2.0  r750fa45 Released Aug 19, 2019 LEX-LEG x86 64bit/Linux                                                                                                                                                                   09/29/19 13:21:16 Page 18
+Despacho Microred con DR .$
+Solution Report     SOLVE DespachoMicroRed Using LP From line 109
+
+
+     VAR PbatDCh  Potencia de descarga de la bateria
+
+           LOWER          LEVEL          UPPER         MARGINAL
+
+t12          .             9.4418        20.0000          .          
+t13          .              .            20.0000         5.0000      
+t14          .              .            20.0000   2.842171E-14      
+t15          .            18.3171        20.0000          .          
+t16          .             4.2939        20.0000          .          
+t17          .              .            20.0000        10.0000      
+t18          .              .            20.0000        22.4250      
+t19          .              .            20.0000         1.0000      
+t20          .            20.0000        20.0000       -23.0000      
+t21          .            20.0000        20.0000        -8.0000      
+t22          .              .            20.0000         6.0000      
+t23          .              .            20.0000        22.0000      
+t24          .            20.0000        20.0000      -193.0000      
+
+---- VAR Ebat  energia almacenada en la bateria
+
+           LOWER          LEVEL          UPPER         MARGINAL
+
+t1         20.0000        20.0000        80.0000          .          
+t2         20.0000        20.0000        80.0000          .          
+t3         20.0000        23.0000        80.0000          .          
+t4         20.0000        42.0000        80.0000          .          
+t5         20.0000        61.0000        80.0000          .          
+t6         20.0000        80.0000        80.0000          .          
+t7         20.0000        80.0000        80.0000        -5.1474      
+t8         20.0000        80.0000        80.0000          .          
+t9         20.0000        80.0000        80.0000        -9.5000      
+t10        20.0000        80.0000        80.0000        -9.5000      
+t11        20.0000        80.0000        80.0000        -8.5500      
+t12        20.0000        80.0000        80.0000        -4.7500      
+t13        20.0000        70.0613        80.0000          .          
+t14        20.0000        70.0613        80.0000          .          
+t15        20.0000        70.0613        80.0000          .          
+t16        20.0000        50.7801        80.0000          .          
+t17        20.0000        46.2602        80.0000          .          
+t18        20.0000        46.2602        80.0000          .          
+t19        20.0000        62.1053        80.0000          .          
+t20        20.0000        62.1053        80.0000          .          
+t21        20.0000        41.0526        80.0000          .          
+t22        20.0000        20.0000        80.0000          .          
+t23        20.0000        20.0000        80.0000          .          
+t24        20.0000        20.0000        80.0000        37.4474      
+GAMS 28.2.0  r750fa45 Released Aug 19, 2019 LEX-LEG x86 64bit/Linux                                                                                                                                                                   09/29/19 13:21:16 Page 19
+Despacho Microred con DR .$
+Solution Report     SOLVE DespachoMicroRed Using LP From line 109
+
+
+---- VAR Cut1  Demanda del corte 1
+
+           LOWER          LEVEL          UPPER         MARGINAL
+
+t1           .              .              .          -140.0000      
+t2           .              .              .          -134.0000      
+t3           .              .              .          -127.0000      
+t4           .              .              .          -124.0000      
+t5           .              .              .          -128.0000      
+t6           .              .              .          -138.0000      
+t7           .              .              .          -148.0000      
+t8           .              .              .          -158.0000      
+t9           .              .              .          -168.0000      
+t10          .              .              .          -178.0000      
+t11          .              .              .          -187.0000      
+t12          .              .              .          -192.0000      
+t13          .              .              .          -187.0000      
+t14          .              .              .          -192.0000      
+t15          .              .              .          -192.0000      
+t16          .              .              .          -192.0000      
+t17          .              .              .          -182.0000      
+t18          .              .              .          -169.5750      
+t19          .              .              .          -191.0000      
+t20          .              .              .          -215.0000      
+t21          .              .              .          -200.0000      
+t22          .              .              .          -186.0000      
+t23          .              .              .          -170.0000      
+t24          .              .              .          -155.0000      
+
+---- VAR Cut2  Demanda del corte 2
+
+           LOWER          LEVEL          UPPER         MARGINAL
+
+t1           .              .              .          -122.0000      
+t2           .              .              .          -116.0000      
+t3           .              .              .          -109.0000      
+t4           .              .              .          -106.0000      
+t5           .              .              .          -110.0000      
+t6           .              .              .          -120.0000      
+t7           .              .              .          -130.0000      
+t8           .              .              .          -140.0000      
+t9           .              .              .          -150.0000      
+t10          .              .              .          -160.0000      
+t11          .              .              .          -169.0000      
+t12          .              .              .          -174.0000      
+t13          .              .              .          -169.0000      
+t14          .              .              .          -174.0000      
+t15          .              .              .          -174.0000      
+t16          .              .              .          -174.0000      
+t17          .              .              .          -164.0000      
+t18          .              .              .          -151.5750      
+t19          .              .              .          -173.0000      
+t20          .              .              .          -197.0000      
+GAMS 28.2.0  r750fa45 Released Aug 19, 2019 LEX-LEG x86 64bit/Linux                                                                                                                                                                   09/29/19 13:21:16 Page 20
+Despacho Microred con DR .$
+Solution Report     SOLVE DespachoMicroRed Using LP From line 109
+
+
+     VAR Cut2  Demanda del corte 2
+
+           LOWER          LEVEL          UPPER         MARGINAL
+
+t21          .              .              .          -182.0000      
+t22          .              .              .          -168.0000      
+t23          .              .              .          -152.0000      
+t24          .              .              .          -137.0000      
+
+---- VAR Cut3  Demanda del corte 3
+
+           LOWER          LEVEL          UPPER         MARGINAL
+
+t1           .              .              .           -64.0000      
+t2           .              .              .           -58.0000      
+t3           .              .              .           -51.0000      
+t4           .              .              .           -48.0000      
+t5           .              .              .           -52.0000      
+t6           .              .              .           -62.0000      
+t7           .              .              .           -72.0000      
+t8           .              .              .           -82.0000      
+t9           .              .              .           -92.0000      
+t10          .              .              .          -102.0000      
+t11          .              .              .          -111.0000      
+t12          .              .              .          -116.0000      
+t13          .              .              .          -111.0000      
+t14          .              .              .          -116.0000      
+t15          .              .              .          -116.0000      
+t16          .              .              .          -116.0000      
+t17          .              .              .          -106.0000      
+t18          .              .              .           -93.5750      
+t19          .              .              .          -115.0000      
+t20          .              .              .          -139.0000      
+t21          .              .              .          -124.0000      
+t22          .              .              .          -110.0000      
+t23          .              .              .           -94.0000      
+t24          .              .              .           -79.0000      
+
+---- VAR CutCom  Complemento de la energia de los cortes
+
+           LOWER          LEVEL          UPPER         MARGINAL
+
+t1           .              .            +INF          178.0000      
+t2           .              .            +INF          172.0000      
+t3           .              .            +INF          165.0000      
+t4           .              .            +INF          162.0000      
+t5           .              .            +INF          166.0000      
+t6           .              .            +INF          176.0000      
+t7           .              .            +INF          186.0000      
+t8           .              .            +INF          196.0000      
+t9           .              .            +INF          206.0000      
+t10          .              .            +INF          216.0000      
+t11          .              .            +INF          225.0000      
+GAMS 28.2.0  r750fa45 Released Aug 19, 2019 LEX-LEG x86 64bit/Linux                                                                                                                                                                   09/29/19 13:21:16 Page 21
+Despacho Microred con DR .$
+Solution Report     SOLVE DespachoMicroRed Using LP From line 109
+
+
+     VAR CutCom  Complemento de la energia de los cortes
+
+           LOWER          LEVEL          UPPER         MARGINAL
+
+t12          .              .            +INF          230.0000      
+t13          .              .            +INF          225.0000      
+t14          .              .            +INF          230.0000      
+t15          .              .            +INF          230.0000      
+t16          .              .            +INF          230.0000      
+t17          .              .            +INF          220.0000      
+t18          .              .            +INF          207.5750      
+t19          .              .            +INF          229.0000      
+t20          .              .            +INF          253.0000      
+t21          .              .            +INF          238.0000      
+t22          .              .            +INF          224.0000      
+t23          .              .            +INF          208.0000      
+t24          .              .            +INF          193.0000      
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 28.2.0  r750fa45 Released Aug 19, 2019 LEX-LEG x86 64bit/Linux                                                                                                                                                                   09/29/19 13:21:16 Page 22
+Despacho Microred con DR .$
+E x e c u t i o n
+
+
+----    110 VARIABLE Ebat.L  energia almacenada en la bateria
+
+t1  20.000,    t2  20.000,    t3  23.000,    t4  42.000,    t5  61.000,    t6  80.000,    t7  80.000,    t8  80.000,    t9  80.000,    t10 80.000,    t11 80.000,    t12 80.000,    t13 70.061,    t14 70.061,    t15 70.061,    t16 50.780,    t17 46.260
+t18 46.260,    t19 62.105,    t20 62.105,    t21 41.053,    t22 20.000,    t23 20.000,    t24 20.000
+
+**** Exec Error at line 112: Execute has nonzero return code RC=127
+
+
+EXECUTION TIME       =        0.004 SECONDS      3 MB  28.2.0 r750fa45 LEX-LEG
+
+
+USER: GAMS Development Corporation, USA              G871201/0000CA-ANY
+      Free Demo, +1 202-342-0180, support@gams.com, www.gams.com DC0000
+
+
+**** FILE SUMMARY
+
+Input      /home/gbecerra/Javeriana/Research/ProyectoAlmacenamiento/microgrid_gams/MicrogridDespacho3NODR.gms
+Output     /home/gbecerra/Javeriana/Research/ProyectoAlmacenamiento/microgrid_gams/MicrogridDespacho3NODR.lst
+
+**** USER ERROR(S) ENCOUNTERED
