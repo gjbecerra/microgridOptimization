@@ -1,5 +1,3 @@
-Research Journal
-
 # Research Journal
 
 ## 27/12/2020
