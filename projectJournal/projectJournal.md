@@ -1,7 +1,24 @@
 # Research Journal
 
-## 27/12/2020
-- I have reviewed the code implemented in `microgrid2.py` for solving the optimization problem. I improved the presentation of the previous version of the script, and checked the results. So far it seems to be working OK
+## 08/05/2020
+- I checked again in detail the file `PreciosHorarios.xlsx` provided by Adrián to understand the computations performed to obtain the energy prices. The basic idea is to compute the total price based on two components: market price and network usage. The variables can be defined as follows:
+1. Load Power Forecast [kW]: $p_l(k)$
+2. PV Power Forecast [kW]: $p_s(k)$
+3. Net Power Flow [kW]: $p_n(k) = \abs(p_l(k) - p_s(k))$
+4. Market Energy Price [$]: $c_m(k)$
+5. Unit Energy Price [$]: $c_u(k)$
+6. Total Energy Price [$]: $c_t(k)$
+
+The formula for obtaining the total price is:
+$c_t(k) = (c_u(k)/2)((c_m(k)/average(c_m(k))) + (p_n(k)/average(p_n(k))))$
+
+
+## 28/02/2020
+- I implemented changes in the script `microgrid.py` for reading energy prices from a file with historic market prices obtained from XM. The records span the years 1995 to 2020.
+
+## 27/02/2020
+- I have reviewed the code implemented in `microgrid2.py` for solving the optimization problem. I improved the presentation of the previous version of the script, and checked the results. So far it seems to be working OK.
+- I should now implement the approaches for determining the energy prices, obtaining this information from some dataset or computing it dynamically. I can start using historic market prices obtained from [XM](http://portalbissrs.xm.com.co/trpr/Paginas/Historicos/Historicos.aspx).
 
 ## 26/12/2020
 - There must be a causal relation between the rain precipitation levels and the energy price in the market, given that most of the energy generated in Colombia comes from hydroelectric plants. Maybe I could use a LSTM network for predicting the market price based on historic IDEAM measurements of weather variables. I should try to find out if there is data from locations with hydro power plants.
