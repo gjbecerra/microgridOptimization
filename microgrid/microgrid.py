@@ -185,7 +185,14 @@ if m.status == GRB.Status.OPTIMAL:
     print(f"Date: {date}, Total Energy Cost = ${totalCost:.2f}")
    
     fig, axs = plt.subplots(4, 1, constrained_layout=True, figsize=(10,13))
-    fig.suptitle(f"Date: {date}, Total Energy Cost = ${totalCost:.2f}")
+    figtitle = f"Date: {date}, Total Energy Cost = ${totalCost:.2f}"
+    if useHistoricPrice:
+        figtitle = figtitle + ", Market Price"
+    elif useCregPrice:
+        figtitle = figtitle + ", CREG Price"
+    elif useDynamicPrice:
+        figtitle = figtitle + ", Dynamic Price"
+    fig.suptitle(figtitle)
     axs[0].step(range(25),Cd + [Cd[-1]], where='post')
     axs[0].legend(["Spot price of Grid Power (Pd)"])
     axs[0].minorticks_on()
@@ -219,6 +226,8 @@ if m.status == GRB.Status.OPTIMAL:
         filename = filename + "_HistoricPrice.svg"
     elif useCregPrice:
         filename = filename + "_CregPrice.svg"
+    elif useDynamicPrice:
+        filename = filename + "_DynamicPrice.svg"
     plt.savefig("results/" + filename)
    
     plt.show()
