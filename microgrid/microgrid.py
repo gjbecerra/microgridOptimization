@@ -22,14 +22,14 @@ def readExampleData():
 # id: selects the location (house number) for the load measurements
 def readLoadPVData(date,id):
     # Reads complete load dataset
-    loadData = pd.read_csv("loadMeasures.csv", sep=';', index_col="datetime", parse_dates=True)
+    loadData = pd.read_csv("loadMeasures.csv", sep=',', index_col="datetime", parse_dates=True)
     # Gets load data for a particular date and id
     Pl = list(loadData.loc[date.strftime("%Y-%m-%d"),id])
     # Gets load data for all the year and a particular id
     yearLoadData = loadData.loc[date.strftime("%Y")+'-01-01':date.strftime("%Y")+'-12-31',id]
 
     # Reads complete PV dataset
-    pvData = pd.read_csv("PVforecast-measure.csv", sep=';', index_col="datetime", parse_dates=True)
+    pvData = pd.read_csv("PVforecast-measure.csv", sep=',', index_col="datetime", parse_dates=True)
     # Gets PV data for a particular date
     Ppv = list(pvData.loc[date.strftime("%Y-%m-%d"),"PV forecast [kW]"])
     # Gets PV data for all the year
