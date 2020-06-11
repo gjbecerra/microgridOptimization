@@ -70,8 +70,8 @@ def computeCregPrice():
     # Solves the linear system 
     x = np.linalg.solve(A, b)
 
-    CostoVariable=np.sum(x[0]*Curvapu[indx])+np.sum(x[1]*Curvapu[indz])+np.sum(x[2]*Curvapu[indy])
-    CostoFija=np.sum(Dt*Curvapu)
+    # CostoVariable=np.sum(x[0]*Curvapu[indx])+np.sum(x[1]*Curvapu[indz])+np.sum(x[2]*Curvapu[indy])
+    # CostoFija=np.sum(Dt*Curvapu)
 
     Cd = np.zeros(24)
     Cd[indx] = x[0]
