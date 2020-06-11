@@ -134,11 +134,11 @@ Pdch_min = 0                # Minimum power discharged from the batteries
 Pdch_max = 20               # Maximum power discharged from the batteries
 Ee_min = 0.2*Pbat_nom*5     # Minimum energy stored in the batteries
 Ee_max = 0.8*Pbat_nom*5     # Maximum energy stored in the batteries
-Psh_min = 0                 # Minimum power shifted by demand response
-Psh_max = 100               # Maximum power shifted by demand response
-Pdr_min = 0                 # Minimum demand response power cut 
-Pdr_max = 30                # Maximum demand response power cut
-Cdr = [38, 56, 114]         # Price of demand response program for each cut
+# Psh_min = 0                 # Minimum power shifted by demand response
+# Psh_max = 100               # Maximum power shifted by demand response
+# Pdr_min = 0                 # Minimum demand response power cut 
+# Pdr_max = 30                # Maximum demand response power cut
+# Cdr = [38, 56, 114]         # Price of demand response program for each cut
 
 # Create variables
 Pd   = m.addVars(range(24),             lb=Pd_min,                name='PowerSupplyGrid')           # Power supplied by the grid at time t
