@@ -28,10 +28,10 @@ def readLoadPVData(date,id):
     yearLoadPvData = yearPvData.to_frame().join(yearLoadData.to_frame())
     # Computes the average net power flow
     yearPn = abs(yearLoadPvData["PV forecast [kW]"] - yearLoadPvData[id])
-    Pnmean = yearPn.mean()
-    Pn = list(yearPn.loc[date.strftime("%Y-%m-%d")])
+    averageYearLoadPower = yearPn.mean()
+    averageNetLoadPower = list(yearPn.loc[date.strftime("%Y-%m-%d")])
 
-    return loadPower, pvPower, Pn, Pnmean
+    return loadPower, pvPower, averageNetLoadPower, averageYearLoadPower
 
 # Function for computing the energy price according to Creg 15-2018
 def computeCregPrice():
@@ -68,6 +68,30 @@ def computeCregPrice():
     energyCost[indz] = x[1]
     energyCost[indy] = x[2]
     return list(energyCost)
+
+def readMarketPrice(priceDate):
+    # energyCost: energy cost
+    data = pd.read_csv("precioBolsa.csv")
+    data.set_index("Fecha", inplace=True)
+    # Gets the hourly price for a given date
+    energyCost = list(data.loc[priceDate.strftime("%Y-%m-%d"), :])
+    return energyCost
+
+def computeDynamicPrice(priceDate, averageNetLoadPower, averageYearLoadPower):
+    # Loads market price data from  file:
+    # energyCost: energy cost
+    data = pd.read_csv("precioBolsa.csv")
+    data.set_index("Fecha", inplace=True)
+    # Gets the hourly market price for a given date
+    Cm = list(data.loc[priceDate.strftime("%Y-%m-%d"), :])
+    # Computes the daily mean for the complete dataset and stores it
+    # as the last column of the dataframe
+    data['dailymean'] = data.mean(axis=1)
+    # Computes the mean market price for all the year
+    Cmmean = data.loc[priceDate.strftime("%Y")+'-01-01':priceDate.strftime("%Y")+'-12-31','dailymean'].mean()
+    Cu = 550   # Unit energy cost
+    energyCost = list((Cu/2)*(Cm/Cmmean + averageNetLoadPower/averageYearLoadPower))
+    return energyCost
 
 # Function that builds and solves the optimal problem
 def computeOptimalSolution(loadPower, pvPower, energyCost):
