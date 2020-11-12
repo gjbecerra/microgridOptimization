@@ -176,6 +176,8 @@ def prepareFigure(priceDate, loadDate, totalCost, energyPriceType, energyCost, p
     figtitle = f"Price Date: {priceDate}, Load Date: {loadDate}, Total Energy Cost = ${totalCost:.2f}"
 
     figtitle = figtitle + ", " + energyPriceType 
+    if energyPriceType == "fixed":
+        figtitle = figtitle + ", Fixed Price"
     if energyPriceType == "market":
         figtitle = figtitle + ", Market Price"
     elif energyPriceType == "creg":
@@ -205,6 +207,8 @@ def prepareFigure(priceDate, loadDate, totalCost, energyPriceType, energyCost, p
     axs[2].grid(b=True, which='minor', color='lightgray', linestyle='--')
     
     filename = "OptimalSolution_" + loadDate.strftime("%Y-%m-%d")
+    if energyPriceType == "fixed":
+        filename = filename + "_FixedPrice.svg"
     if energyPriceType == "market":
         filename = filename + "_HistoricPrice.svg"
     elif energyPriceType == "creg":
