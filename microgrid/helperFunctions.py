@@ -168,7 +168,7 @@ def computeOptimalSolution(loadPower, pvPower, energyCost):
     
     return optimSolFound, gridPower_res, batteryChargePower_res, batteryDischargePower_res, batteryStoredEnergy_res, totalCost
 
-def prepareFigure(priceDate, loadDate, totalCost, energyPriceType, energyCost, gridPower_res, pvPower, loadPower, batteryChargePower_res, batteryDischargePower_res, batteryStoredEnergy_res):
+def prepareFigure(priceDate, loadDate, totalCost, energyPriceType, energyCost, pvPower, loadPower, gridPower_res, batteryChargePower_res, batteryDischargePower_res, batteryStoredEnergy_res):
     # Prepares figure with results
     print(f"Price Date: {priceDate}, Load Date: {loadDate}, Total Energy Cost = ${totalCost:.2f}")
    
