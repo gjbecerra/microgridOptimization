@@ -99,21 +99,21 @@ def computeOptimalSolution(loadPower, pvPower, energyCost):
     m = Model('microgrid')
 
     # Create paremeters
-    batteryNominalPower = 20               # Nominal battery power
+    batteryNominalPower = 20        # Nominal battery power
     eta_charge = 0.95               # Charge efficiency
-    eta_discharge = 0.95              # Discharge efficiency
-    gridPower_min = 0             # Minimum power supplied by the grid
-    gridPower_max = 50            # Maximum power supplied by the grid
-    batteryChargePower_min = 0           # Minimum power charged to the batteries
-    batteryChargePower_max = 20          # Maximum power charged to the batteries
-    batteryDischargePower_min = 0          # Minimum power discharged from the batteries
-    batteryDischargePower_max = 20         # Maximum power discharged from the batteries
+    eta_discharge = 0.95            # Discharge efficiency
+    gridPower_min = 0               # Minimum power supplied by the grid
+    gridPower_max = 50              # Maximum power supplied by the grid
+    batteryChargePower_min = 0      # Minimum power charged to the batteries
+    batteryChargePower_max = 20     # Maximum power charged to the batteries
+    batteryDischargePower_min = 0   # Minimum power discharged from the batteries
+    batteryDischargePower_max = 20  # Maximum power discharged from the batteries
     batteryStoredEnergy_min = 0.2*batteryNominalPower*5     # Minimum energy stored in the batteries
     batteryStoredEnergy_max = 0.8*batteryNominalPower*5     # Maximum energy stored in the batteries
 
     # Create variables
-    gridPower   = m.addVars(range(24),           lb=gridPower_min,                                           name='Grid_Supplied_Power')      # Power supplied by the grid at time t
-    batteryChargePower  = m.addVars(range(24),   lb=batteryChargePower_min,    ub=batteryChargePower_max,    name='Battery_Charge_Power')     # Power charged to the batteries at time t
+    gridPower             = m.addVars(range(24), lb=gridPower_min,             ub=gridPower_max,             name='Grid_Supplied_Power')      # Power supplied by the grid at time t
+    batteryChargePower    = m.addVars(range(24), lb=batteryChargePower_min,    ub=batteryChargePower_max,    name='Battery_Charge_Power')     # Power charged to the batteries at time t
     batteryDischargePower = m.addVars(range(24), lb=batteryDischargePower_min, ub=batteryDischargePower_max, name='Battery_Discharge_Power')  # Power discharged from the batteries at time t
     batteryStoredEnergy   = m.addVars(range(24), lb=batteryStoredEnergy_min,   ub=batteryStoredEnergy_max,   name='Battery_Stored_Energy')    # Energy stored in the batteries at time t
 
@@ -191,7 +191,7 @@ def prepareFigure(priceDate, loadDate, totalCost, energyPriceType, energyCost, g
     axs[0].grid(b=True, which='major', color='darkgray', linestyle='-')
     axs[0].grid(b=True, which='minor', color='lightgray', linestyle='--')
     axs[1].step(range(25),gridPower_res, where='post', linestyle='-')
-    axs[1].step(range(25),pvPower + [pvPower[-1]], where='post', linestyle='--')
+    axs[1].step(range(25),pvPower + [pvPower[-1]], where='post', linestyle='-')
     axs[1].step(range(25),loadPower + [loadPower[-1]], where='post', linestyle='--')
     axs[1].legend(["Power supplied by the grid (Pd)", "Power supplied by the PV system (pvPower)", "Power consumed by the loads (loadPower)"])
     axs[1].minorticks_on()
