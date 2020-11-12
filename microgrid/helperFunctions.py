@@ -175,7 +175,7 @@ def prepareFigure(priceDate, loadDate, totalCost, energyPriceType, energyCost, p
     # Prepares figure with results
     print(f"Price Date: {priceDate}, Load Date: {loadDate}, Total Energy Cost = ${totalCost:.2f}")
    
-    fig, axs = plt.subplots(3, 1, constrained_layout=True, figsize=(10,13))
+    fig, axs = plt.subplots(4, 1, constrained_layout=True, figsize=(10,13))
     figtitle = f"Price Date: {priceDate}, Load Date: {loadDate}, Total Energy Cost = ${totalCost:.2f}"
 
     figtitle = figtitle + ", " + energyPriceType 
@@ -203,11 +203,15 @@ def prepareFigure(priceDate, loadDate, totalCost, energyPriceType, energyCost, p
     axs[1].grid(b=True, which='minor', color='lightgray', linestyle='--')
     axs[2].step(range(25),batteryChargePower_res, where='post', linestyle='-')
     axs[2].step(range(25),batteryDischargePower_res, where='post', linestyle='--')
-    axs[2].plot(range(25),batteryStoredEnergy_res, linestyle='-')
-    axs[2].legend(["Charge Power in battery (batteryChargePower)", "Discharge Power in battery (batteryDischargePower)", "Energy in battery (batteryStoredEnergy)"])
+    axs[2].legend(["Charge Power in battery (batteryChargePower)", "Discharge Power in battery (batteryDischargePower)"])
     axs[2].minorticks_on()
     axs[2].grid(b=True, which='major', color='darkgray', linestyle='-')
     axs[2].grid(b=True, which='minor', color='lightgray', linestyle='--')
+    axs[3].plot(range(25),batteryStoredEnergy_res, linestyle='-')
+    axs[3].legend(["Energy in battery (batteryStoredEnergy)"])
+    axs[3].minorticks_on()
+    axs[3].grid(b=True, which='major', color='darkgray', linestyle='-')
+    axs[3].grid(b=True, which='minor', color='lightgray', linestyle='--')
     
     filename = "OptimalSolution_" + loadDate.strftime("%Y-%m-%d")
     if energyPriceType == "fixed":
