@@ -117,8 +117,8 @@ def computeOptimalSolution(loadPower, pvPower, energyCost):
     batteryStoredEnergy   = m.addVars(range(24), lb=batteryStoredEnergy_min,   ub=batteryStoredEnergy_max,   name='Battery_Stored_Energy')    # Energy stored in the batteries at time t
 
     # Create constraints
-    m.addConstrs((batteryStoredEnergy[t] == batteryStoredEnergy[t-1] + eta_charge*batteryChargePower[t-1] - eta_discharge * batteryDischargePower[t-1] for t in range(1,24)), name="Constr2")
-    m.addConstrs((gridPower[t] == loadPower[t] + batteryChargePower[t] - batteryDischargePower[t] - pvPower[t] for t in range(24)), name="Constr3")
+    m.addConstrs((batteryStoredEnergy[t] == batteryStoredEnergy[t-1] + eta_charge*batteryChargePower[t-1] - eta_discharge*batteryDischargePower[t-1] for t in range(1,24)), name="Constr2")
+    m.addConstrs((gridPower[t] == loadPower[t] + eta_charge*batteryChargePower[t] - eta_discharge*batteryDischargePower[t] - pvPower[t] for t in range(24)), name="Constr3")
     m.addConstr(batteryStoredEnergy[0] == batteryStoredEnergy[23], name="Constr5")
     m.addConstrs((gridPower[t] <= loadPower[t] for t in range(24)), name="Constr9")
 
