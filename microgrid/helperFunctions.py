@@ -115,7 +115,7 @@ def computeOptimalSolution(loadPower, pvPower, energyCost):
     batteryChargePower    = m.addVars(range(24), lb=batteryChargePower_min,    ub=batteryChargePower_max,    name='Battery_Charge_Power')     # Power charged to the batteries at time t
     batteryDischargePower = m.addVars(range(24), lb=batteryDischargePower_min, ub=batteryDischargePower_max, name='Battery_Discharge_Power')  # Power discharged from the batteries at time t
     batteryStoredEnergy   = m.addVars(range(24), lb=batteryStoredEnergy_min,   ub=batteryStoredEnergy_max,   name='Battery_Stored_Energy')    # Energy stored in the batteries at time t
-    xbat                  = m.addVars(range(24), vtype=GRB.BINARY, name="xbat")
+    xbat                  = m.addVars(range(24), vtype=GRB.BINARY, name="xbat")     # Binary variable that defines the state of the inverter (xbat=1: charging, xbat=0: discharging)
 
     # Create constraints
     m.addConstrs((batteryStoredEnergy[t] == batteryStoredEnergy[t-1] + eta_charge*batteryChargePower[t-1] - eta_discharge*batteryDischargePower[t-1] for t in range(1,24)), name="Constr2")
@@ -190,25 +190,25 @@ def prepareFigure(priceDate, loadDate, totalCost, energyPriceType, energyCost, p
 
     fig.suptitle(figtitle)
     axs[0].step(range(25),energyCost + [energyCost[-1]], where='post')
-    axs[0].legend(["Spot price of Grid Power (Pd)"])
+    axs[0].legend(["Spot price of Grid Power"])
     axs[0].minorticks_on()
     axs[0].grid(b=True, which='major', color='darkgray', linestyle='-')
     axs[0].grid(b=True, which='minor', color='lightgray', linestyle='--')
     axs[1].step(range(25),gridPower_res, where='post', linestyle='-')
     axs[1].step(range(25),pvPower + [pvPower[-1]], where='post', linestyle='-')
     axs[1].step(range(25),loadPower + [loadPower[-1]], where='post', linestyle='--')
-    axs[1].legend(["Power supplied by the grid (Pd)", "Power supplied by the PV system (pvPower)", "Power consumed by the loads (loadPower)"])
+    axs[1].legend(["Power supplied by the grid", "Power supplied by the PV system", "Power consumed by the loads"])
     axs[1].minorticks_on()
     axs[1].grid(b=True, which='major', color='darkgray', linestyle='-')
     axs[1].grid(b=True, which='minor', color='lightgray', linestyle='--')
     axs[2].step(range(25),batteryChargePower_res, where='post', linestyle='-')
     axs[2].step(range(25),batteryDischargePower_res, where='post', linestyle='--')
-    axs[2].legend(["Charge Power in battery (batteryChargePower)", "Discharge Power in battery (batteryDischargePower)"])
+    axs[2].legend(["Charge Power in battery", "Discharge Power in battery"])
     axs[2].minorticks_on()
     axs[2].grid(b=True, which='major', color='darkgray', linestyle='-')
     axs[2].grid(b=True, which='minor', color='lightgray', linestyle='--')
     axs[3].plot(range(25),batteryStoredEnergy_res, linestyle='-')
-    axs[3].legend(["Energy in battery (batteryStoredEnergy)"])
+    axs[3].legend(["Energy in battery"])
     axs[3].minorticks_on()
     axs[3].grid(b=True, which='major', color='darkgray', linestyle='-')
     axs[3].grid(b=True, which='minor', color='lightgray', linestyle='--')

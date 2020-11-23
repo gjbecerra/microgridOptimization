@@ -4,7 +4,6 @@
 # Colombian Energy Market with Demand Response and Energy Storage
 # Microgrid simulation
 import datetime
-
 from helperFunctions import *
 
 # Date for energy price, load power and photovoltaic power data
