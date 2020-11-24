@@ -1,5 +1,29 @@
 # Research Journal
 
+## 16/10/2020
+- I included a binary variable to guarantee that the battery bidirectional inverter is charging XOR discharging.
+- I checked the CREG price algorithm and found a discrepancy. The formula asks for a power curve, but currently it is presented as a percentage. I fixed this by using the maximum load power value as 100% of the typical load curve. This chenges the price of the energy price computation. I still have to figure out how to correctly compute this.
+
+## 23/10/2020
+I changed the code structure by preparing functions that solve the optimization problem and present the results in a figure. This will allow us to solve the problem for multiple scenarios and show a comparison of the results.
+TODO:
+- [ ] Check if solutions where the battery charge and discharge power are equal but nonzero are correct. Ask Adrian why two signals are used in this case.
+- [ ] Ask Adrian why the constraint Pd \leq Pl is included.
+
+## 28/05/2020
+### Reunión con Adrián:
+- [ ] Costo unitario: 550$/kW.  
+- [ ] Comparar con el problema base con el costo unitario sin optimización.  
+- [x] Quitar load shifting. El incentivo es el precio
+- Venta de servicios adicionales: remuneración por subir o bajar la demanda.
+- Control de frecuencia: 60Hz. AGC: plantas que ofrecen mover la generación hacia arriba o abajo para mantener la frecuencia alrededor de 60 Hz. Permitir al usuario final participar en éste mercado. Agregadores que reunan paquetes de usuarios finales para participar en el mercado.
+  1. Alternativa 1: Explicar que los paquetes deben ser grandes para prestar el servicio. Nuestro modelo podría tomar la señal del agregador para participar
+  2. Alternativa 2: Servicio auxiliar (no frecuencia). Variaciones para resolver problemas al operador de red (Codensa). Aliviar problemas de congestión, mejorar perfiles de distribución. Paquetes más pequeños.
+- Keywords: Prosumer (consumidor que produce), frequency service.
+- Papers de referencia:
+  - P. Olivella-Rosell, E. Bullich-Massagué, M. Aragüés-Peñalba, A. Sumper, S.Ødegaard Ottesen, J.-A. Vidal-Clos, and R. Villafáfila-Robles, “Optimization problem for meeting distribution system operator requests in local flexibility markets with distributed energy resources,” Applied Energy, vol. 210, pp. 881 – 895, 2018. [Online].
+  - Otros del mismo autor.
+
 ## 08/05/2020
 I checked again in detail the file `PreciosHorarios.xlsx` provided by Adrián to understand the computations performed to obtain the energy prices. The basic idea is to compute the total price based on two components: market price and network usage. The variables can be defined as follows:
 1. Load Power Forecast [kW]: $p_l(k)$
@@ -13,6 +37,7 @@ The formula for obtaining the total price is:
 $$c_t(k) = \frac{c_u}{2}\left[\left(\frac{c_m(k)}{\bar{c}_m}\right) + \left(\frac{p_n(k)}{\bar{p}_n}\right)\right]$$
 
 After checking the results, it seems that the basic idea is to obtain a dynamic pricing scheme that in average yields the unit energy price.
+
 TODO:
 - [x] Compute the average market price for the current year.
 - [x] Compute the average net power flow for the current year.
