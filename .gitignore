@@ -1,0 +1,5 @@
+*.svg
+*.png
+*__pycache__*
+*.pyc
+gurobi.log
