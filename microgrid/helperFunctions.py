@@ -4,7 +4,7 @@ from gurobipy import *
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from datetime import datetime
+import datetime
 
 # Function for reading load data from loadMeasures dataset
 # Data available from 03/01/2017 to 21/12/2017
@@ -216,7 +216,7 @@ def prepareFigure(priceDate, loadDate, totalCost, energyPriceType, energyCost, p
     
     # filename = "OptimalSolution_" + loadDate.strftime("%Y-%m-%d")
     filename = "OptimalSolution_"
-    filename = filename + datetime.now().strftime("%d%m%Y-%H:%M:%S")
+    filename = filename + datetime.datetime.now().strftime("%d%m%Y-%H:%M:%S")
     if energyPriceType == "fixed":
         filename = filename + "_FixedPrice.svg"
     if energyPriceType == "market":

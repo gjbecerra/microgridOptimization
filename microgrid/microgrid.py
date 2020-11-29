@@ -3,12 +3,12 @@
 # Correa, C.A., Marulanda, G., Garces, A. Optimal Microgrid Management in the
 # Colombian Energy Market with Demand Response and Energy Storage
 # Microgrid simulation
-from datetime import date
+import datetime
 from helperFunctions import *
 
 # Date for energy price, load power and photovoltaic power data
-loadDate = date(2017,6,7)
-priceDate = date(2019,6,7)
+loadDate = datetime.date(2017,6,7)
+priceDate = datetime.date(2019,6,7)
 # Selects the type of energy price computation
 # The options are "fixed", "market", "creg", "dynamic"
 energyPriceType = "creg"
