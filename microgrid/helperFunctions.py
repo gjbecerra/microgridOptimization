@@ -35,27 +35,26 @@ def readLoadPVData(date,id):
     return loadPower, pvPower, averageNetLoadPower, averageYearLoadPower
 
 # Function for computing the energy price according to Creg 15-2018
-def computeCregPrice():
-    # Defines the typical load curve
-    Curvapu=0.01*np.array([60,65,70,70,75,80,80,80,80,80,75,75,75,80,85,90,90,95,100,100,95,85,80,65])
+def computeCregPrice(typicalLoadCurve, unitCost):
+    Pi = 0.01*np.array(typicalLoadCurve)
+    Dt = unitCost
     fch=2
 
     # Finds the intervals for maximum (x), medium (z) and minimum (y) load
-    indx = np.where((Curvapu>=0.95))[0]
-    indz = np.where((Curvapu<0.95) & (Curvapu>=0.75))[0]
-    indy = np.where((Curvapu<0.75))[0]
-    Hx=len(indx)
-    Hz=len(indz)
-    Hy=len(indy)
-    Px=np.mean(Curvapu[indx])
-    Pz=np.mean(Curvapu[indz])
-    Py=np.mean(Curvapu[indy])
-    Dt=350
-    sumPi=np.sum(Curvapu)
+    indx = np.where((Pi>=0.95))[0]
+    indz = np.where((Pi<0.95) & (Pi>=0.75))[0]
+    indy = np.where((Pi<0.75))[0]
+    Hx = len(indx)
+    Hz = len(indz)
+    Hy = len(indy)
+    Px = np.mean(Pi[indx])
+    Pz = np.mean(Pi[indz])
+    Py = np.mean(Pi[indy])
+    sumPi =np.sum(Pi)
 
     # Builds the matrices
-    A=np.array([[Hx*Px/fch,Hz*Pz,fch*Hy*Py],[1/fch,-Px/Pz,0],[1/(fch*fch),0,-Px/Py]])
-    b=np.array([[Dt*sumPi],[0],[0]])
+    A = np.array([[Hx*Px/fch,Hz*Pz,fch*Hy*Py],[1/fch,-Px/Pz,0],[1/(fch*fch),0,-Px/Py]])
+    b = np.array([[Dt*sumPi],[0],[0]])
 
     # Solves the linear system 
     x = np.linalg.solve(A, b)

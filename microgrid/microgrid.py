@@ -29,7 +29,9 @@ elif energyPriceType == "market":
     energyCost = readMarketPrice(priceDate)
 elif energyPriceType == "creg":
     # Computes the energy price using the approach described in CREG 015-2018
-    energyCost = computeCregPrice()
+    # Defines the typical load power curve as a percentage
+    typicalLoadCurve = [60,65,70,70,75,80,80,80,80,80,75,75,75,80,85,90,90,95,100,100,95,85,80,65]
+    energyCost = computeCregPrice(typicalLoadCurve, unitCost)
 elif energyPriceType == "dynamic":
     # Computes the energy price using the dynamic energy approach
     energyCost = computeDynamicPrice(priceDate, averageNetLoadPower, averageYearLoadPower, unitCost)
