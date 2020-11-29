@@ -171,7 +171,7 @@ def computeOptimalSolution(loadPower, pvPower, energyCost):
     
     return optimSolFound, gridPower_res, batteryChargePower_res, batteryDischargePower_res, batteryStoredEnergy_res, totalCost
 
-def prepareFigure(priceDate, loadDate, totalCost, energyPriceType, energyCost, pvPower, loadPower, gridPower_res, batteryChargePower_res, batteryDischargePower_res, batteryStoredEnergy_res):
+def prepareFigure(priceDate, loadDate, totalCost, energyPriceType, energyCost, pvPower, loadPower, gridPower_res, batteryChargePower_res, batteryDischargePower_res, batteryStoredEnergy_res, typicalLoadCurve):
     # Prepares figure with results
     print(f"Price Date: {priceDate}, Load Date: {loadDate}, Total Energy Cost = ${totalCost:.2f}")
    
@@ -194,6 +194,12 @@ def prepareFigure(priceDate, loadDate, totalCost, energyPriceType, energyCost, p
     axs[0].minorticks_on()
     axs[0].grid(b=True, which='major', color='darkgray', linestyle='-')
     axs[0].grid(b=True, which='minor', color='lightgray', linestyle='--')
+    if typicalLoadCurve:
+        loadCurve = typicalLoadCurve + [typicalLoadCurve[-1]]
+        axs2 = axs[0].twinx()
+        axs2.step(range(25), loadCurve, where='post', linestyle='--', color='tab:red')
+        axs2.tick_params(axis='y', labelcolor='tab:red')
+        axs2.legend(["Typical Load Curve"], loc='upper right')
     axs[1].step(range(25),gridPower_res, where='post', linestyle='-')
     axs[1].step(range(25),pvPower + [pvPower[-1]], where='post', linestyle='-')
     axs[1].step(range(25),loadPower + [loadPower[-1]], where='post', linestyle='--')

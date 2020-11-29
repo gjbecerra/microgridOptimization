@@ -40,5 +40,7 @@ elif energyPriceType == "dynamic":
 optimSolFound, gridPower_res, batteryChargePower_res, batteryDischargePower_res, batteryStoredEnergy_res, totalCost = computeOptimalSolution(loadPower, pvPower, energyCost)
 if optimSolFound:
     prepareFigure(priceDate, loadDate, totalCost, energyPriceType, energyCost, pvPower, loadPower, gridPower_res, batteryChargePower_res, batteryDischargePower_res, batteryStoredEnergy_res)
-    print("Optimization finished!")
-
+    if energyPriceType == 'creg':
+        prepareFigure(priceDate, loadDate, totalCost, energyPriceType, energyCost, pvPower, loadPower, gridPower_res, batteryChargePower_res, batteryDischargePower_res, batteryStoredEnergy_res, typicalLoadCurve=typicalLoadCurve)
+    else:
+        prepareFigure(priceDate, loadDate, totalCost, energyPriceType, energyCost, pvPower, loadPower, gridPower_res, batteryChargePower_res, batteryDischargePower_res, batteryStoredEnergy_res, typicalLoadCurve="")
