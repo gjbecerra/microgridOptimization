@@ -237,5 +237,5 @@ def prepareFigure(priceDate, loadDate, totalCost, energyPriceType, energyCost, p
 def exportResults(Pcharge, Pdischarge, Pgrid):
     data = {'H': [datetime.time(i,0).strftime("%H:%M") for i in range(24)], 'Pch': Pcharge[:-1], 'Pdch': Pdischarge[:-1], 'Pd': Pgrid[:-1]}
     df = pd.DataFrame(data)
-    df.to_csv('export_data.csv', sep=';', index=False, line_terminator=';\n', date_format="%H:%M")
+    df.to_csv('power_profile.csv', sep=';', index=False, line_terminator=';\n', date_format="%H:%M")
 
