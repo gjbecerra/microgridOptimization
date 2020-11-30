@@ -123,15 +123,15 @@ def optimalSolutionScenario1(loadPower, pvPower, energyCost):
     batteryChargePower    = m.addVars(range(24), lb=batteryChargePower_min,    ub=batteryChargePower_max,    name='Battery_Charge_Power')     # Power charged to the batteries at time t
     batteryDischargePower = m.addVars(range(24), lb=batteryDischargePower_min, ub=batteryDischargePower_max, name='Battery_Discharge_Power')  # Power discharged from the batteries at time t
     batteryStoredEnergy   = m.addVars(range(25), lb=batteryStoredEnergy_min,   ub=batteryStoredEnergy_max,   name='Battery_Stored_Energy')    # Energy stored in the batteries at time t
-    xbat                  = m.addVars(range(24), vtype=GRB.BINARY, name="xbat")     # Binary variable that defines the state of the inverter (xbat=1: charging, xbat=0: discharging)
+    q                     = m.addVars(range(24), vtype=GRB.BINARY, name="xbat")     # Binary variable that defines the state of the inverter (xbat=1: charging, xbat=0: discharging)
 
     # Create constraints
     m.addConstrs((batteryStoredEnergy[t] == batteryStoredEnergy[t-1] + eta_charge*batteryChargePower[t-1] - eta_discharge*batteryDischargePower[t-1] for t in range(1,25)), name="Constr2")
     m.addConstrs((gridPower[t] == loadPower[t] + eta_charge*batteryChargePower[t] - eta_discharge*batteryDischargePower[t] - pvPower[t] for t in range(24)), name="Constr3")
     m.addConstr(batteryStoredEnergy[0] == batteryStoredEnergy[24], name="Constr5")
     m.addConstrs((gridPower[t] <= loadPower[t] for t in range(24)), name="Constr9")
-    m.addConstrs((batteryChargePower[t] <= xbat[t]*batteryChargePower_max for t in range(24)))
-    m.addConstrs((batteryDischargePower[t] <= (1-xbat[t])*batteryDischargePower_max for t in range(24)))
+    m.addConstrs((batteryChargePower[t] <= q[t]*batteryChargePower_max for t in range(24)))
+    m.addConstrs((batteryDischargePower[t] <= (1-q[t])*batteryDischargePower_max for t in range(24)))
 
     # Create objective function
     m.setObjective(quicksum(energyCost[t]*gridPower[t] for t in range(24)), GRB.MINIMIZE)
