@@ -225,7 +225,8 @@ def optimalSolutionScenario2(loadPower, pvPower, energyCost):
     m.addConstrs((gridPower[t] == loadPower[t] + eta_charge*batteryChargePower[t] - eta_discharge*batteryDischargePower[t] - pvPower[t] + Psh[t] - Pcut1[t] - Pcut2[t] - Pcut3[t] for t in range(24)), name="Constr3")
     m.addConstr(quicksum(Pcut1[t] + Pcut2[t] + Pcut3[t] for t in range(24)) == quicksum(Psh[t] for t in range(24)), name="Constr4")
     m.addConstr(batteryStoredEnergy[0] == batteryStoredEnergy[24], name="Constr5")
-    m.addConstrs((gridPower[t] <= loadPower[t] for t in range(24)), name="Constr9")
+    # m.addConstrs((gridPower[t] <= loadPower[t] for t in range(24)), name="Constr9")
+    m.addConstrs((gridPower[t] <= loadPower[t] + Psh[t] - Pcut1[t] - Pcut2[t] - Pcut3[t] for t in range(24)), name="Constr9")
     m.addConstrs((batteryChargePower[t] <= xbat[t]*batteryChargePower_max for t in range(24)))
     m.addConstrs((batteryDischargePower[t] <= (1-xbat[t])*batteryDischargePower_max for t in range(24)))
 
