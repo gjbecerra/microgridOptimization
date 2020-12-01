@@ -189,8 +189,8 @@ def optimalSolutionScenario2(loadPower, pvPower, energyCost):
 
     # Create paremeters
     batteryNominalPower = 20        # Nominal battery power
-    eta_charge = 1               # Charge efficiency
-    eta_discharge = 1            # Discharge efficiency
+    eta_charge = 0.95               # Charge efficiency
+    eta_discharge = 0.95            # Discharge efficiency
     gridPower_min = 0               # Minimum power supplied by the grid
     gridPower_max = 50              # Maximum power supplied by the grid
     batteryChargePower_min = 0      # Minimum power charged to the batteries
@@ -222,7 +222,7 @@ def optimalSolutionScenario2(loadPower, pvPower, energyCost):
 
     # Create constraints
     m.addConstrs((batteryStoredEnergy[t] == batteryStoredEnergy[t-1] + eta_charge*batteryChargePower[t-1] - eta_discharge*batteryDischargePower[t-1] for t in range(1,25)), name="Constr2")
-    m.addConstrs((gridPower[t] == loadPower[t] + eta_charge*batteryChargePower[t] - eta_discharge*batteryDischargePower[t] - pvPower[t] + Psh[t] - Pcut1[t] - Pcut2[t] - Pcut3[t] for t in range(24)), name="Constr3")
+    m.addConstrs((gridPower[t] == loadPower[t] + batteryChargePower[t] - batteryDischargePower[t] - pvPower[t] + Psh[t] - Pcut1[t] - Pcut2[t] - Pcut3[t] for t in range(24)), name="Constr3")
     m.addConstr(quicksum(Pcut1[t] + Pcut2[t] + Pcut3[t] for t in range(24)) == quicksum(Psh[t] for t in range(24)), name="Constr4")
     m.addConstr(batteryStoredEnergy[0] == batteryStoredEnergy[24], name="Constr5")
     # m.addConstrs((gridPower[t] <= loadPower[t] for t in range(24)), name="Constr9")
