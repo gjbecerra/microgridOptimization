@@ -57,11 +57,10 @@ def computeCregPrice(typicalLoadCurve, unitCost):
     Px = np.mean(Pi[indx])
     Pz = np.mean(Pi[indz])
     Py = np.mean(Pi[indy])
-    sumPi =np.sum(Pi)
 
     # Builds the matrices
     A = np.array([[Hx*Px/fch,Hz*Pz,fch*Hy*Py],[1/fch,-Px/Pz,0],[1/(fch*fch),0,-Px/Py]])
-    b = np.array([[Dt*sumPi],[0],[0]])
+    b = np.array([[Dt*np.sum(Pi)],[0],[0]])
 
     # Solves the linear system 
     x = np.linalg.solve(A, b)
@@ -101,40 +100,40 @@ def computeDynamicPrice(priceDate, averageNetLoadPower, averageYearLoadPower, un
 
 # Builds and solves the optimal problem for the scenario 2:
 # System with battery storage, photovoltaic generation, but no Demand Response
-def optimalSolutionScenario1(loadPower, pvPower, energyCost):
+def optimalSolutionScenario1(Pl, Ppv, Cd):
     # Create a new moded
     m = Model('microgrid')
 
     # Create paremeters
-    batteryNominalPower = 20        # Nominal battery power
-    eta_charge = 0.95               # Charge efficiency
-    eta_discharge = 0.95            # Discharge efficiency
-    gridPower_min = 0               # Minimum power supplied by the grid
-    gridPower_max = 50              # Maximum power supplied by the grid
-    batteryChargePower_min = 0      # Minimum power charged to the batteries
-    batteryChargePower_max = 20     # Maximum power charged to the batteries
-    batteryDischargePower_min = 0   # Minimum power discharged from the batteries
-    batteryDischargePower_max = 20  # Maximum power discharged from the batteries
-    batteryStoredEnergy_min = 0.2*batteryNominalPower*5     # Minimum energy stored in the batteries
-    batteryStoredEnergy_max = 0.8*batteryNominalPower*5     # Maximum energy stored in the batteries
+    Es_nom = 20        # Nominal battery power
+    eta_ch = 0.95               # Charge efficiency
+    eta_dch = 0.95            # Discharge efficiency
+    Pd_min = 0               # Minimum power supplied by the grid
+    Pd_max = 50              # Maximum power supplied by the grid
+    Pch_min = 0      # Minimum power charged to the batteries
+    Pch_max = 20     # Maximum power charged to the batteries
+    Pdch_min = 0   # Minimum power discharged from the batteries
+    Pdch_max = 20  # Maximum power discharged from the batteries
+    Es_mini = 0.2*Es_nom*5     # Minimum energy stored in the batteries
+    Es_max = 0.8*Es_nom*5     # Maximum energy stored in the batteries
 
     # Create variables
-    gridPower             = m.addVars(range(24), lb=gridPower_min,             ub=gridPower_max,             name='Grid_Supplied_Power')      # Power supplied by the grid at time t
-    batteryChargePower    = m.addVars(range(24), lb=batteryChargePower_min,    ub=batteryChargePower_max,    name='Battery_Charge_Power')     # Power charged to the batteries at time t
-    batteryDischargePower = m.addVars(range(24), lb=batteryDischargePower_min, ub=batteryDischargePower_max, name='Battery_Discharge_Power')  # Power discharged from the batteries at time t
-    batteryStoredEnergy   = m.addVars(range(25), lb=batteryStoredEnergy_min,   ub=batteryStoredEnergy_max,   name='Battery_Stored_Energy')    # Energy stored in the batteries at time t
-    q                     = m.addVars(range(24), vtype=GRB.BINARY, name="xbat")     # Binary variable that defines the state of the inverter (xbat=1: charging, xbat=0: discharging)
+    Pd   = m.addVars(range(24), lb=Pd_min,   ub=Pd_max,   name='Grid_Supplied_Power')      # Power supplied by the grid at time t
+    Pch  = m.addVars(range(24), lb=Pch_min,  ub=Pch_max,  name='Battery_Charge_Power')     # Power charged to the batteries at time t
+    Pdch = m.addVars(range(24), lb=Pdch_min, ub=Pdch_max, name='Battery_Discharge_Power')  # Power discharged from the batteries at time t
+    Es   = m.addVars(range(25), lb=Es_mini,  ub=Es_max,   name='Battery_Stored_Energy')    # Energy stored in the batteries at time t
+    q    = m.addVars(range(24), vtype=GRB.BINARY, name="charger_on_off")     # Binary variable that defines the state of the inverter (xbat=1: charging, xbat=0: discharging)
 
     # Create constraints
-    m.addConstrs((batteryStoredEnergy[t] == batteryStoredEnergy[t-1] + eta_charge*batteryChargePower[t-1] - eta_discharge*batteryDischargePower[t-1] for t in range(1,25)), name="Constr2")
-    m.addConstrs((gridPower[t] == loadPower[t] + eta_charge*batteryChargePower[t] - eta_discharge*batteryDischargePower[t] - pvPower[t] for t in range(24)), name="Constr3")
-    m.addConstr(batteryStoredEnergy[0] == batteryStoredEnergy[24], name="Constr5")
-    m.addConstrs((gridPower[t] <= loadPower[t] for t in range(24)), name="Constr9")
-    m.addConstrs((batteryChargePower[t] <= q[t]*batteryChargePower_max for t in range(24)))
-    m.addConstrs((batteryDischargePower[t] <= (1-q[t])*batteryDischargePower_max for t in range(24)))
+    m.addConstrs((Es[t] == Es[t-1] + eta_ch*Pch[t-1] - eta_dch*Pdch[t-1] for t in range(1,25)), name="C(1b)")
+    m.addConstrs((Pd[t] == Pl[t] + Pch[t] - Pdch[t] - Ppv[t] for t in range(24)), name="C(1c)")
+    m.addConstr(Es[0] == Es[24], name="C(1d)")
+    m.addConstrs((Pch[t] <= q[t]*Pch_max for t in range(24)), name="C(1f)")
+    m.addConstrs((Pdch[t] <= (1-q[t])*Pdch_max for t in range(24)), name="C(1g)")
+    m.addConstrs((Pd[t] <= Pl[t] for t in range(24)), name="C(1h)")
 
     # Create objective function
-    m.setObjective(quicksum(energyCost[t]*gridPower[t] for t in range(24)), GRB.MINIMIZE)
+    m.setObjective(quicksum(Cd[t]*Pd[t] for t in range(24)), GRB.MINIMIZE)
 
     # Save model
     m.update()
@@ -145,16 +144,16 @@ def optimalSolutionScenario1(loadPower, pvPower, energyCost):
 
     # Get solution
     if m.status == GRB.Status.OPTIMAL:
-        gridPower_sol = m.getAttr('x', gridPower)
-        batteryChargePower_sol = m.getAttr('x', batteryChargePower)
-        batteryDischargePower_sol = m.getAttr('x', batteryDischargePower)
-        batteryStoredEnergy_sol = m.getAttr('x', batteryStoredEnergy)
+        Pd_sol = m.getAttr('x', Pd)
+        Pch_sol = m.getAttr('x', Pch)
+        Pdch_sol = m.getAttr('x', Pdch)
+        Es_sol = m.getAttr('x', Es)
 
         # Appends the last value to show the last hour in the step plot
-        gridPower_res   =  gridPower_sol.values()   + [gridPower_sol.values()[-1]]
-        batteryChargePower_res  =  batteryChargePower_sol.values()  + [batteryChargePower_sol.values()[-1]]
-        batteryDischargePower_res =  batteryDischargePower_sol.values() + [batteryDischargePower_sol.values()[-1]]
-        batteryStoredEnergy_res   =  batteryStoredEnergy_sol.values()
+        Pd_res   =  Pd_sol.values()   + [Pd_sol.values()[-1]]
+        Pch_res  =  Pch_sol.values()  + [Pch_sol.values()[-1]]
+        Pdch_res =  Pdch_sol.values() + [Pdch_sol.values()[-1]]
+        Es_res   =  Es_sol.values()
 
         # Gets the total cost as the optimal value of the objective function
         totalCost = m.objVal
@@ -170,68 +169,61 @@ def optimalSolutionScenario1(loadPower, pvPower, energyCost):
         for c in m.getConstrs():
             if c.IISConstr:
                 print('%s' % c.constrName)
-        gridPower_res   =  0
-        batteryChargePower_res  =  0
-        batteryDischargePower_res =  0
-        batteryStoredEnergy_res   =  0
+        Pd_res   =  0
+        Pch_res  =  0
+        Pdch_res =  0
+        Es_res   =  0
 
         totalCost = 0 
         optimSolFound = False
     
-    return optimSolFound, gridPower_res, batteryChargePower_res, batteryDischargePower_res, batteryStoredEnergy_res, totalCost
+    return optimSolFound, Pd_res, Pch_res, Pdch_res, Es_res, totalCost
 
 
 # Builds and solves the optimal problem for the scenario 3:
 # System with battery storage, photovoltaic generation and Demand Response
-def optimalSolutionScenario2(loadPower, pvPower, energyCost):
+def optimalSolutionScenario2(Pl, Ppv, Cd):
     # Create a new moded
     m = Model('microgrid')
 
     # Create paremeters
-    batteryNominalPower = 20        # Nominal battery power
-    eta_charge = 0.95               # Charge efficiency
-    eta_discharge = 0.95            # Discharge efficiency
-    gridPower_min = 0               # Minimum power supplied by the grid
-    gridPower_max = 50              # Maximum power supplied by the grid
-    batteryChargePower_min = 0      # Minimum power charged to the batteries
-    batteryChargePower_max = 20     # Maximum power charged to the batteries
-    batteryDischargePower_min = 0   # Minimum power discharged from the batteries
-    batteryDischargePower_max = 20  # Maximum power discharged from the batteries
-    batteryStoredEnergy_min = 0.2*batteryNominalPower*5     # Minimum energy stored in the batteries
-    batteryStoredEnergy_max = 0.8*batteryNominalPower*5     # Maximum energy stored in the batteries
+    Es_nom = 20        # Nominal battery power
+    eta_ch = 0.95               # Charge efficiency
+    eta_dch = 0.95            # Discharge efficiency
+    Pd_min = 0               # Minimum power supplied by the grid
+    Pd_max = 50              # Maximum power supplied by the grid
+    Pch_min = 0      # Minimum power charged to the batteries
+    Pch_max = 20     # Maximum power charged to the batteries
+    Pdch_min = 0   # Minimum power discharged from the batteries
+    Pdch_max = 20  # Maximum power discharged from the batteries
+    Es_min = 0.2*Es_nom*5     # Minimum energy stored in the batteries
+    Es_max = 0.8*Es_nom*5     # Maximum energy stored in the batteries
+    Pcut_min = 0                 # Minimum demand response power cut 
+    Pcut_max = 10                # Maximum demand response power cut
     Psh_min = 0                 # Minimum power shifted by demand response
     Psh_max = 100               # Maximum power shifted by demand response
-    Pcut1_min = 0                 # Minimum demand response power cut 
-    Pcut1_max = 10                # Maximum demand response power cut
-    Pcut2_min = 0                 # Minimum demand response power cut 
-    Pcut2_max = 20                # Maximum demand response power cut
-    Pcut3_min = 0                 # Minimum demand response power cut 
-    Pcut3_max = 30                # Maximum demand response power cut
-    Cdr = [38, 56, 114]         # Price of demand response program for each cut
+    Ccut = [38, 56, 114]         # Price of demand response program for each cut
 
     # Create variables
-    gridPower             = m.addVars(range(24), lb=gridPower_min,             ub=gridPower_max,             name='Grid_Supplied_Power')      # Power supplied by the grid at time t
-    batteryChargePower    = m.addVars(range(24), lb=batteryChargePower_min,    ub=batteryChargePower_max,    name='Battery_Charge_Power')     # Power charged to the batteries at time t
-    batteryDischargePower = m.addVars(range(24), lb=batteryDischargePower_min, ub=batteryDischargePower_max, name='Battery_Discharge_Power')  # Power discharged from the batteries at time t
-    batteryStoredEnergy   = m.addVars(range(25), lb=batteryStoredEnergy_min,   ub=batteryStoredEnergy_max,   name='Battery_Stored_Energy')    # Energy stored in the batteries at time t
-    Psh  = m.addVars(range(24),     lb=Psh_min,    ub=Psh_max,    name='PowerShifted')              # Power shifted by demand response program at time t
-    Pcut1  = m.addVars(range(24),   lb=Pcut1_min,  ub=Pcut1_max,  name='PowerDemandResponseCut')    # Power cut by demand response program at time t
-    Pcut2  = m.addVars(range(24),   lb=Pcut2_min,  ub=Pcut2_max,  name='PowerDemandResponseCut')    # Power cut by demand response program at time t
-    Pcut3  = m.addVars(range(24),   lb=Pcut3_min,  ub=Pcut3_max,  name='PowerDemandResponseCut')    # Power cut by demand response program at time t
-    xbat                  = m.addVars(range(24), vtype=GRB.BINARY, name="xbat")     # Binary variable that defines the state of the inverter (xbat=1: charging, xbat=0: discharging)
+    Pd   = m.addVars(range(24), lb=Pd_min,   ub=Pd_max,   name='Grid_Supplied_Power')      # Power supplied by the grid at time t
+    Pch  = m.addVars(range(24), lb=Pch_min,  ub=Pch_max,  name='Battery_Charge_Power')     # Power charged to the batteries at time t
+    Pdch = m.addVars(range(24), lb=Pdch_min, ub=Pdch_max, name='Battery_Discharge_Power')  # Power discharged from the batteries at time t
+    Es   = m.addVars(range(25), lb=Es_min,   ub=Es_max,   name='Battery_Stored_Energy')    # Energy stored in the batteries at time t
+    Pcut = m.addVars(len(Ccut),range(24), lb=Pcut_min, ub=Pcut_max, name='PowerDemandResponseCut')    # Power cut by demand response program at time t
+    Psh  = m.addVars(range(24), lb=Psh_min,  ub=Psh_max,  name='PowerShifted')              # Power shifted by demand response program at time t
+    q    = m.addVars(range(24), vtype=GRB.BINARY, name="xbat")     # Binary variable that defines the state of the inverter (xbat=1: charging, xbat=0: discharging)
 
     # Create constraints
-    m.addConstrs((batteryStoredEnergy[t] == batteryStoredEnergy[t-1] + eta_charge*batteryChargePower[t-1] - eta_discharge*batteryDischargePower[t-1] for t in range(1,25)), name="Constr2")
-    m.addConstrs((gridPower[t] == loadPower[t] + batteryChargePower[t] - batteryDischargePower[t] - pvPower[t] + Psh[t] - Pcut1[t] - Pcut2[t] - Pcut3[t] for t in range(24)), name="Constr3")
-    m.addConstr(quicksum(Pcut1[t] + Pcut2[t] + Pcut3[t] for t in range(24)) == quicksum(Psh[t] for t in range(24)), name="Constr4")
-    m.addConstr(batteryStoredEnergy[0] == batteryStoredEnergy[24], name="Constr5")
-    # m.addConstrs((gridPower[t] <= loadPower[t] for t in range(24)), name="Constr9")
-    m.addConstrs((gridPower[t] <= loadPower[t] + Psh[t] - Pcut1[t] - Pcut2[t] - Pcut3[t] for t in range(24)), name="Constr9")
-    m.addConstrs((batteryChargePower[t] <= xbat[t]*batteryChargePower_max for t in range(24)))
-    m.addConstrs((batteryDischargePower[t] <= (1-xbat[t])*batteryDischargePower_max for t in range(24)))
+    m.addConstrs((Es[t] == Es[t-1] + eta_ch*Pch[t-1] - eta_dch*Pdch[t-1] for t in range(1,25)), name="Constr2")
+    m.addConstrs((Pd[t] == Pl[t] + Pch[t] - Pdch[t] - Ppv[t] + Psh[t] - quicksum(Pcut[i,t] for i in range(len(Ccut))) for t in range(24)), name="Constr3")
+    m.addConstr(quicksum(quicksum(Pcut[i,t] for i in range(len(Ccut))) for t in range(24)) == quicksum(Psh[t] for t in range(24)), name="Constr4")
+    m.addConstr(Es[0] == Es[24], name="Constr5")
+    m.addConstrs((Pch[t] <= q[t]*Pch_max for t in range(24)))
+    m.addConstrs((Pdch[t] <= (1-q[t])*Pdch_max for t in range(24)))
+    m.addConstrs((Pd[t] <= Pl[t] + Psh[t] - quicksum(Pcut[i,t] for i in range(len(Ccut))) for t in range(24)), name="Constr9")
 
     # Create objective function
-    m.setObjective(quicksum(energyCost[t]*gridPower[t] + Cdr[0]*Pcut1[t] + Cdr[1]*Pcut2[t] + Cdr[2]*Pcut3[t] for t in range(24)), GRB.MINIMIZE)
+    m.setObjective(quicksum(Cd[t]*Pd[t] + quicksum(Ccut[i]*Pcut[i,t] for i in range(len(Ccut))) for t in range(24)), GRB.MINIMIZE)
 
     # Save model
     m.update()
@@ -242,24 +234,20 @@ def optimalSolutionScenario2(loadPower, pvPower, energyCost):
 
     # Get solution
     if m.status == GRB.Status.OPTIMAL:
-        gridPower_sol = m.getAttr('x', gridPower)
-        batteryChargePower_sol = m.getAttr('x', batteryChargePower)
-        batteryDischargePower_sol = m.getAttr('x', batteryDischargePower)
-        batteryStoredEnergy_sol = m.getAttr('x', batteryStoredEnergy)
-        Psh_sol = m.getAttr('x', Psh)
-        Pcut1_sol = m.getAttr('x', Pcut1)
-        Pcut2_sol = m.getAttr('x', Pcut2)
-        Pcut3_sol = m.getAttr('x', Pcut3)
+        Pd_sol = m.getAttr('x',Pd)
+        Pch_sol = m.getAttr('x',Pch)
+        Pdch_sol = m.getAttr('x',Pdch)
+        Es_sol = m.getAttr('x',Es)
+        Psh_sol = m.getAttr('x',Psh)
+        Pcut_sol = m.getAttr('x',Pcut)
 
         # Appends the last value to show the last hour in the step plot
-        gridPower_res   =  gridPower_sol.values()   + [gridPower_sol.values()[-1]]
-        batteryChargePower_res  =  batteryChargePower_sol.values()  + [batteryChargePower_sol.values()[-1]]
-        batteryDischargePower_res =  batteryDischargePower_sol.values() + [batteryDischargePower_sol.values()[-1]]
-        batteryStoredEnergy_res   =  batteryStoredEnergy_sol.values()
+        Pd_res   =  Pd_sol.values()   + [Pd_sol.values()[-1]]
+        Pch_res  =  Pch_sol.values()  + [Pch_sol.values()[-1]]
+        Pdch_res =  Pdch_sol.values() + [Pdch_sol.values()[-1]]
+        Es_res   =  Es_sol.values()
         Psh_res  =  Psh_sol.values()  + [Psh_sol.values()[-1]]
-        Pcut1_res  =  Pcut1_sol.values()  + [Pcut1_sol.values()[-1]]
-        Pcut2_res  =  Pcut2_sol.values()  + [Pcut2_sol.values()[-1]]
-        Pcut3_res  =  Pcut3_sol.values()  + [Pcut3_sol.values()[-1]]
+        Pcut_res  =  Pcut_sol
 
         totalCost = m.objVal
         
@@ -274,113 +262,140 @@ def optimalSolutionScenario2(loadPower, pvPower, energyCost):
         for c in m.getConstrs():
             if c.IISConstr:
                 print('%s' % c.constrName)
-        gridPower_res   =  0
-        batteryChargePower_res  =  0
-        batteryDischargePower_res =  0
-        batteryStoredEnergy_res   =  0
+        Pd_res   =  0
+        Pch_res  =  0
+        Pdch_res =  0
+        Es_res   =  0
 
         totalCost = 0 
         optimSolFound = False
     
-    return optimSolFound, gridPower_res, batteryChargePower_res, batteryDischargePower_res, batteryStoredEnergy_res, Psh_res, Pcut1_res, Pcut2_res, Pcut3_res, totalCost
+    return optimSolFound, Pd_res, Pch_res, Pdch_res, Es_res, Psh_res, Pcut_res, totalCost
 
-def prepareFigureScenario1(loadDate, totalCost, energyCost, pvPower, loadPower, gridPower, batteryChargePower, batteryDischargePower, batteryStoredEnergy, typicalLoadCurve):
+def prepareFigureScenario1(loadDate, totalCost, Cd, Ppv, Pl, Pd, Pch, Pdch, Es, typicalLoadCurve):
+    # Prepares figure with results
+    print(f"Load Date: {loadDate}, Total Energy Cost = ${totalCost:.2f}")
+   
+    fig, axs = plt.subplots(3, 1, constrained_layout=True, figsize=(10,13))
+    # figtitle = f"Load Date: {loadDate}, Total Energy Cost = ${totalCost:.2f}"
+    figtitle = f"Sistema de Alamcenamiento sin DR, Costo total = ${totalCost:.2f}"
+
+    fig.suptitle(figtitle)
+    axs[0].step(range(25),Cd + [Cd[-1]], where='post')
+    axs[0].legend(["Cd"],loc='upper left')
+    axs[0].minorticks_on()
+    axs[0].grid(b=True, which='major', color='darkgray', linestyle='-')
+    axs[0].grid(b=True, which='minor', color='lightgray', linestyle='--')
+    axs[0].set_ylabel('Costo [$]')
+    axs[0].set_xlim([0,24])
+    loadCurve = typicalLoadCurve + [typicalLoadCurve[-1]]
+    axs0b = axs[0].twinx()
+    axs0b.step(range(25), loadCurve, where='post', linestyle='--', color='tab:red')
+    axs0b.tick_params(axis='y', labelcolor='tab:red')
+    axs0b.legend(["Typical Load Curve"], loc='upper right')
+    axs0b.set_ylabel('Potencia [%]', color='tab:red')
+    axs0b.tick_params(axis='y', colors='tab:red')
+    axs0b.set_xlim([0,24])
+    axs[1].step(range(25),Pd, where='post', linestyle='-')
+    axs[1].step(range(25),Ppv + [Ppv[-1]], where='post', linestyle='-')
+    axs[1].step(range(25),Pl + [Pl[-1]], where='post', linestyle='--')
+    axs[1].legend(["Pd", "Ppv", "Pl"], loc="upper left", ncol=3) 
+    axs[1].minorticks_on()
+    axs[1].grid(b=True, which='major', color='darkgray', linestyle='-')
+    axs[1].grid(b=True, which='minor', color='lightgray', linestyle='--')
+    axs[1].set_ylabel('Potencia [kW]')
+    axs[1].set_xlim([0,24])
+    axs[2].step(range(25),Pch, where='post', linestyle='-')
+    axs[2].step(range(25),Pdch, where='post', linestyle='-')
+    axs[2].legend(["Pch", "Pdch"], loc='upper left', ncol=2) 
+    axs[2].minorticks_on()
+    axs[2].grid(b=True, which='major', color='darkgray', linestyle='-')
+    axs[2].grid(b=True, which='minor', color='lightgray', linestyle='--')
+    axs[2].set_xlabel('Tiempo [h]')
+    axs[2].set_ylabel('Potencia [kW]')
+    axs[2].set_xlim([0,24])
+    axs2b = axs[2].twinx()
+    axs2b.plot(range(25),Es, linestyle='--', color='tab:red')
+    axs2b.tick_params(axis='y', labelcolor='tab:red')
+    axs2b.legend(["Es"], loc='upper right')
+    axs2b.set_ylabel('Energía [kWh]', color='tab:red')
+    axs2b.tick_params(axis='y', colors='tab:red')
+    axs2b.set_xlim([0,24])
+    
+    # filename = "OptimalSolution_" + loadDate.strftime("%Y-%m-%d")
+    filename = "OptimalSolution_"
+    filename = filename + datetime.datetime.now().strftime("%d%m%Y-%H:%M:%S")
+    plt.savefig("results/" + filename + ".svg")
+    plt.show()
+
+
+def prepareFigureScenario2(loadDate, totalCost, Cd, Ppv, Pl, Pd, Pch, Pdch, Es, Psh, Pcut, typicalLoadCurve):
     # Prepares figure with results
     print(f"Load Date: {loadDate}, Total Energy Cost = ${totalCost:.2f}")
    
     fig, axs = plt.subplots(4, 1, constrained_layout=True, figsize=(10,13))
-    figtitle = f"Load Date: {loadDate}, Total Energy Cost = ${totalCost:.2f}"
+    # figtitle = f"Load Date: {loadDate}, Total Energy Cost = ${totalCost:.2f}"
+    figtitle = f"Sistema de Alamcenamiento con DR, Costo total = ${totalCost:.2f}"
+
+    loadPower = [Pl[t] + Psh[t] - Pcut[0,t] - Pcut[1,t] - Pcut[2,t] for t in range(24)]
 
     fig.suptitle(figtitle)
-    axs[0].step(range(25),energyCost + [energyCost[-1]], where='post')
-    axs[0].legend(["Spot price of Grid Power"])
+    axs[0].step(range(25),Cd + [Cd[-1]], where='post')
+    axs[0].legend(["Cd"],loc='upper left')
     axs[0].minorticks_on()
     axs[0].grid(b=True, which='major', color='darkgray', linestyle='-')
     axs[0].grid(b=True, which='minor', color='lightgray', linestyle='--')
-    if typicalLoadCurve:
-        loadCurve = typicalLoadCurve + [typicalLoadCurve[-1]]
-        axs2 = axs[0].twinx()
-        axs2.step(range(25), loadCurve, where='post', linestyle='--', color='tab:red')
-        axs2.tick_params(axis='y', labelcolor='tab:red')
-        axs2.legend(["Typical Load Curve"], loc='upper right')
-    axs[1].step(range(25),gridPower, where='post', linestyle='-')
-    axs[1].step(range(25),pvPower + [pvPower[-1]], where='post', linestyle='-')
+    axs[0].set_ylabel('Costo [$]')
+    axs[0].set_xlim([0,24])
+    loadCurve = typicalLoadCurve + [typicalLoadCurve[-1]]
+    axs0b = axs[0].twinx()
+    axs0b.step(range(25), loadCurve, where='post', linestyle='--', color='tab:red')
+    axs0b.tick_params(axis='y', labelcolor='tab:red')
+    axs0b.legend(["Typical Load Curve"], loc='upper right')
+    axs0b.set_ylabel('Potencia [%]', color='tab:red')
+    axs0b.tick_params(axis='y', colors='tab:red')
+    axs0b.set_xlim([0,24])
+    axs[1].step(range(25),Pd, where='post', linestyle='-')
+    axs[1].step(range(25),Ppv + [Ppv[-1]], where='post', linestyle='-')
+    axs[1].step(range(25), Pl + [Pl[-1]], where='post', linestyle='--')
     axs[1].step(range(25),loadPower + [loadPower[-1]], where='post', linestyle='--')
-    axs[1].legend(["Power supplied by the grid", "Power supplied by the PV system", "Power consumed by the loads"])
+    axs[1].legend(["Pd", "Ppv", "Pl", "Pl+Psh-sum(Pcut_i)"], loc="upper left", ncol=4)
     axs[1].minorticks_on()
     axs[1].grid(b=True, which='major', color='darkgray', linestyle='-')
     axs[1].grid(b=True, which='minor', color='lightgray', linestyle='--')
-    axs[2].step(range(25),batteryChargePower, where='post', linestyle='-')
-    axs[2].step(range(25),batteryDischargePower, where='post', linestyle='--')
-    axs[2].legend(["Charge Power in battery", "Discharge Power in battery"])
+    axs[1].set_ylabel('Potencia [kW]')
+    axs[1].set_xlim([0,24])
+    axs[2].step(range(25),Pch, where='post', linestyle='-')
+    axs[2].step(range(25),Pdch, where='post', linestyle='-')
+    axs[2].legend(["Pch", "Pdch"], loc='upper left', ncol=2)
     axs[2].minorticks_on()
     axs[2].grid(b=True, which='major', color='darkgray', linestyle='-')
     axs[2].grid(b=True, which='minor', color='lightgray', linestyle='--')
-    axs[3].plot(range(25),batteryStoredEnergy, linestyle='-')
-    axs[3].legend(["Energy in battery"])
+    axs[2].set_ylabel('Potencia [kW]')
+    axs[2].set_xlim([0,24])
+    axs2b = axs[2].twinx()
+    axs2b.plot(range(25),Es, linestyle='--', color='tab:red')
+    axs2b.tick_params(axis='y', labelcolor='tab:red')
+    axs2b.legend(["Es"], loc='upper right')
+    axs2b.set_ylabel('Energía [kWh]', color='tab:red')
+    axs2b.tick_params(axis='y', colors='tab:red')
+    axs2b.set_xlim([0,24])
+    axs[3].step(range(25),Psh, where='post', linestyle='-')
+    axs[3].step(range(24),list(Pcut[0,t] for t in range(24)), where='post', linestyle='--')
+    axs[3].step(range(24),list(Pcut[1,t] for t in range(24)), where='post', linestyle='-.')
+    axs[3].step(range(24),list(Pcut[2,t] for t in range(24)), where='post', linestyle=':')
+    axs[3].legend(["Psh", "Pcut1", "Pcut2", "Pcut3"], loc='upper left', ncol=4)
     axs[3].minorticks_on()
     axs[3].grid(b=True, which='major', color='darkgray', linestyle='-')
     axs[3].grid(b=True, which='minor', color='lightgray', linestyle='--')
+    axs[3].set_xlabel('Tiempo [h]')
+    axs[3].set_ylabel('Potencia [kW]')
+    axs[3].set_xlim([0,24])
     
     # filename = "OptimalSolution_" + loadDate.strftime("%Y-%m-%d")
     filename = "OptimalSolution_"
     filename = filename + datetime.datetime.now().strftime("%d%m%Y-%H:%M:%S")
-    plt.savefig("results/" + filename)
-    plt.show()
-
-
-def prepareFigureScenario2(loadDate, totalCost, energyCost, pvPower, loadPower, gridPower, batteryChargePower, batteryDischargePower, batteryStoredEnergy, Psh, Pcut1, Pcut2, Pcut3, typicalLoadCurve):
-    # Prepares figure with results
-    print(f"Load Date: {loadDate}, Total Energy Cost = ${totalCost:.2f}")
-   
-    fig, axs = plt.subplots(5, 1, constrained_layout=True, figsize=(10,13))
-    figtitle = f"Load Date: {loadDate}, Total Energy Cost = ${totalCost:.2f}"
-
-    newLoadPower = [loadPower[t] + Psh[t] - Pcut1[t] - Pcut2[t] - Pcut3[t] for t in range(24)]
-
-    fig.suptitle(figtitle)
-    axs[0].step(range(25),energyCost + [energyCost[-1]], where='post')
-    axs[0].legend(["Spot price of Grid Power"])
-    axs[0].minorticks_on()
-    axs[0].grid(b=True, which='major', color='darkgray', linestyle='-')
-    axs[0].grid(b=True, which='minor', color='lightgray', linestyle='--')
-    if typicalLoadCurve:
-        loadCurve = typicalLoadCurve + [typicalLoadCurve[-1]]
-        axs2 = axs[0].twinx()
-        axs2.step(range(25), loadCurve, where='post', linestyle='--', color='tab:red')
-        axs2.tick_params(axis='y', labelcolor='tab:red')
-        axs2.legend(["Typical Load Curve"], loc='upper right')
-    axs[1].step(range(25),gridPower, where='post', linestyle='-')
-    axs[1].step(range(25),pvPower + [pvPower[-1]], where='post', linestyle='-')
-    axs[1].step(range(25),newLoadPower + [newLoadPower[-1]], where='post', linestyle='--')
-    axs[1].legend(["Power supplied by the grid", "Power supplied by the PV system", "Power consumed by the loads"])
-    axs[1].minorticks_on()
-    axs[1].grid(b=True, which='major', color='darkgray', linestyle='-')
-    axs[1].grid(b=True, which='minor', color='lightgray', linestyle='--')
-    axs[2].step(range(25),batteryChargePower, where='post', linestyle='-')
-    axs[2].step(range(25),batteryDischargePower, where='post', linestyle='--')
-    axs[2].legend(["Charge Power in battery", "Discharge Power in battery"])
-    axs[2].minorticks_on()
-    axs[2].grid(b=True, which='major', color='darkgray', linestyle='-')
-    axs[2].grid(b=True, which='minor', color='lightgray', linestyle='--')
-    axs[3].plot(range(25),batteryStoredEnergy, linestyle='-')
-    axs[3].legend(["Energy in battery"])
-    axs[3].minorticks_on()
-    axs[3].grid(b=True, which='major', color='darkgray', linestyle='-')
-    axs[3].grid(b=True, which='minor', color='lightgray', linestyle='--')
-    axs[4].step(range(25),Pcut1, where='post', linestyle='-')
-    axs[4].step(range(25),Pcut2, where='post', linestyle='--')
-    axs[4].step(range(25),Pcut3, where='post', linestyle='-.')
-    axs[4].step(range(25),Psh, where='post', linestyle=':')
-    axs[4].legend(["Power cut 1 (Pdr1)", "Power cut 2 (Pdr2)", "Power cut 3 (Pdr3)", "Shifted power (Psh)"])
-    axs[4].minorticks_on()
-    axs[4].grid(b=True, which='major', color='darkgray', linestyle='-')
-    axs[4].grid(b=True, which='minor', color='lightgray', linestyle='--')
-    
-    # filename = "OptimalSolution_" + loadDate.strftime("%Y-%m-%d")
-    filename = "OptimalSolution_"
-    filename = filename + datetime.datetime.now().strftime("%d%m%Y-%H:%M:%S")
-    plt.savefig("results/" + filename)
+    plt.savefig("results/" + filename + ".svg")
    
     plt.show()
 

@@ -38,10 +38,10 @@ if optimSolFound1:
     prepareFigureScenario1(loadDate, totalCost1, priceCreg, pvPower, loadPower, Pd1, Pch1, Pdch1, Es1, typicalLoadCurve)
 
 # Scenario 2: System with battery storage and photovoltaic generation and demand response scheme
-optimSolFound2, Pd2, Pch2, Pdch2, Es2, Psh, Pcut1, Pcut2, Pcut3, totalCost2 = optimalSolutionScenario2(loadPower, pvPower, priceCreg)
+optimSolFound2, Pd2, Pch2, Pdch2, Es2, Psh, Pcut, totalCost2 = optimalSolutionScenario2(loadPower, pvPower, priceCreg)
 if optimSolFound2:
-    exportResults("scenario2.csv",Pch1, Pdch1, Pd1)
-    prepareFigureScenario2(loadDate, totalCost2, priceCreg, pvPower, loadPower, Pd2, Pch2, Pdch2, Es2, Psh, Pcut1, Pcut2, Pcut3, typicalLoadCurve)
+    exportResults("scenario2.csv",Pch2, Pdch2, Pd2)
+    prepareFigureScenario2(loadDate, totalCost2, priceCreg, pvPower, loadPower, Pd2, Pch2, Pdch2, Es2, Psh, Pcut, typicalLoadCurve)
 
 # Selects the type of energy price computation
 print(f"Base case  - Total cost: ${totalCostCreg}")
