@@ -105,17 +105,17 @@ def optimalSolutionScenario1(Pl, Ppv, Cd):
     m = Model('microgrid')
 
     # Create paremeters
-    Es_nom = 20        # Nominal battery power
-    eta_ch = 0.95               # Charge efficiency
-    eta_dch = 0.95            # Discharge efficiency
-    Pd_min = 0               # Minimum power supplied by the grid
-    Pd_max = 50              # Maximum power supplied by the grid
-    Pch_min = 0      # Minimum power charged to the batteries
-    Pch_max = 20     # Maximum power charged to the batteries
-    Pdch_min = 0   # Minimum power discharged from the batteries
-    Pdch_max = 20  # Maximum power discharged from the batteries
-    Es_mini = 0.2*Es_nom*5     # Minimum energy stored in the batteries
-    Es_max = 0.8*Es_nom*5     # Maximum energy stored in the batteries
+    Es_nom = 20     # Nominal battery power
+    eta_ch = 0.95   # Charge efficiency
+    eta_dch = 0.95  # Discharge efficiency
+    Pd_min = 0      # Minimum power supplied by the grid
+    Pd_max = 50     # Maximum power supplied by the grid
+    Pch_min = 0     # Minimum power charged to the batteries
+    Pch_max = 20    # Maximum power charged to the batteries
+    Pdch_min = 0    # Minimum power discharged from the batteries
+    Pdch_max = 20   # Maximum power discharged from the batteries
+    Es_mini = 0.2*Es_nom*5  # Minimum energy stored in the batteries
+    Es_max = 0.8*Es_nom*5   # Maximum energy stored in the batteries
 
     # Create variables
     Pd   = m.addVars(range(24), lb=Pd_min,   ub=Pd_max,   name='Grid_Supplied_Power')      # Power supplied by the grid at time t
@@ -199,7 +199,7 @@ def optimalSolutionScenario2(Pl, Ppv, Cd):
     Es_min = 0.2*Es_nom*5     # Minimum energy stored in the batteries
     Es_max = 0.8*Es_nom*5     # Maximum energy stored in the batteries
     Pcut_min = 0                 # Minimum demand response power cut 
-    Pcut_max = 10                # Maximum demand response power cut
+    Pcut_max = 20                # Maximum demand response power cut
     Psh_min = 0                 # Minimum power shifted by demand response
     Psh_max = 100               # Maximum power shifted by demand response
     Ccut = [38, 56, 114]         # Price of demand response program for each cut
@@ -359,38 +359,38 @@ def prepareFigureScenario2(loadDate, totalCost, Cd, Ppv, Pl, Pd, Pch, Pdch, Es, 
     axs[1].step(range(25),Ppv + [Ppv[-1]], where='post', linestyle='-')
     axs[1].step(range(25), Pl + [Pl[-1]], where='post', linestyle='--')
     axs[1].step(range(25),loadPower + [loadPower[-1]], where='post', linestyle='--')
-    axs[1].legend(["Pd", "Ppv", "Pl", "Pl+Psh-sum(Pcut_i)"], loc="upper left", ncol=4)
+    axs[1].legend(["Pd", "Ppv", "Pl", "Pl+Psh-sum(Pcut_i)"], loc="best", ncol=4)
     axs[1].minorticks_on()
     axs[1].grid(b=True, which='major', color='darkgray', linestyle='-')
     axs[1].grid(b=True, which='minor', color='lightgray', linestyle='--')
     axs[1].set_ylabel('Potencia [kW]')
     axs[1].set_xlim([0,24])
-    axs[2].step(range(25),Pch, where='post', linestyle='-')
-    axs[2].step(range(25),Pdch, where='post', linestyle='-')
-    axs[2].legend(["Pch", "Pdch"], loc='upper left', ncol=2)
+    axs[2].step(range(25),Psh, where='post', linestyle='-')
+    axs[2].step(range(24),list(Pcut[0,t] for t in range(24)), where='post', linestyle='--')
+    axs[2].step(range(24),list(Pcut[1,t] for t in range(24)), where='post', linestyle='-.')
+    axs[2].step(range(24),list(Pcut[2,t] for t in range(24)), where='post', linestyle=':')
+    axs[2].legend(["Psh", "Pcut1", "Pcut2", "Pcut3"], loc='best', ncol=4)
     axs[2].minorticks_on()
     axs[2].grid(b=True, which='major', color='darkgray', linestyle='-')
     axs[2].grid(b=True, which='minor', color='lightgray', linestyle='--')
+    axs[2].set_xlabel('Tiempo [h]')
     axs[2].set_ylabel('Potencia [kW]')
     axs[2].set_xlim([0,24])
-    axs2b = axs[2].twinx()
-    axs2b.plot(range(25),Es, linestyle='--', color='tab:red')
-    axs2b.tick_params(axis='y', labelcolor='tab:red')
-    axs2b.legend(["Es"], loc='upper right')
-    axs2b.set_ylabel('Energía [kWh]', color='tab:red')
-    axs2b.tick_params(axis='y', colors='tab:red')
-    axs2b.set_xlim([0,24])
-    axs[3].step(range(25),Psh, where='post', linestyle='-')
-    axs[3].step(range(24),list(Pcut[0,t] for t in range(24)), where='post', linestyle='--')
-    axs[3].step(range(24),list(Pcut[1,t] for t in range(24)), where='post', linestyle='-.')
-    axs[3].step(range(24),list(Pcut[2,t] for t in range(24)), where='post', linestyle=':')
-    axs[3].legend(["Psh", "Pcut1", "Pcut2", "Pcut3"], loc='upper left', ncol=4)
+    axs[3].step(range(25),Pch, where='post', linestyle='-')
+    axs[3].step(range(25),Pdch, where='post', linestyle='-')
+    axs[3].legend(["Pch", "Pdch"], loc='upper left', ncol=2)
     axs[3].minorticks_on()
     axs[3].grid(b=True, which='major', color='darkgray', linestyle='-')
     axs[3].grid(b=True, which='minor', color='lightgray', linestyle='--')
-    axs[3].set_xlabel('Tiempo [h]')
     axs[3].set_ylabel('Potencia [kW]')
     axs[3].set_xlim([0,24])
+    axs3b = axs[3].twinx()
+    axs3b.plot(range(25),Es, linestyle='--', color='tab:red')
+    axs3b.tick_params(axis='y', labelcolor='tab:red')
+    axs3b.legend(["Es"], loc='upper right')
+    axs3b.set_ylabel('Energía [kWh]', color='tab:red')
+    axs3b.tick_params(axis='y', colors='tab:red')
+    axs3b.set_xlim([0,24])
     
     # filename = "OptimalSolution_" + loadDate.strftime("%Y-%m-%d")
     filename = "OptimalSolution_"
@@ -399,8 +399,8 @@ def prepareFigureScenario2(loadDate, totalCost, Cd, Ppv, Pl, Pd, Pch, Pdch, Es, 
    
     plt.show()
 
-def exportResults(fileName, Pcharge, Pdischarge, Pgrid):
-    data = {'H': [datetime.time(i,0).strftime("%H:%M") for i in range(24)], 'Pch': Pcharge[:-1], 'Pdch': Pdischarge[:-1], 'Pd': Pgrid[:-1]}
+def exportResults(fileName, Pch, Pdch, Pd):
+    data = {'H': [datetime.time(i,0).strftime("%H:%M") for i in range(24)], 'Pch': Pch[:-1], 'Pdch': Pdch[:-1], 'Pd': Pd[:-1]}
     df = pd.DataFrame(data)
     df.to_csv(fileName, sep=';', index=False, line_terminator=';\n', date_format="%H:%M")
 
