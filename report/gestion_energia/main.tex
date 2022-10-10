@@ -1,0 +1,57 @@
+\include{main.preamble}
+
+\begin{document}
+%Global setting for source code display with listings
+\lstset{basicstyle=\scriptsize\ttfamily,language={[LaTeX]TeX}}
+
+%Page numbering in Arabic
+\pagenumbering{arabic}
+
+%Headers and footers
+\pagestyle{scrheadings}
+\clearscrheadfoot
+
+\ihead{Sistema de Gestión de Energía}
+\ohead{Reporte Final}
+\ifoot{Grupo CEPIT}
+\cfoot{\pagemark}
+\ofoot{\today}
+
+%Title
+\input{00_titulo}
+
+%Beginning of the chapter
+\input{01_introduccion}
+	
+\input{02_descripcion}
+
+%Bibliography
+\clearpage
+\printbibliography[heading=bibintoc]
+
+%Photo credits
+%Kann auskommentiert werden, wenn keine Übernahme von Abbildungen erfolgt ist.
+% \clearpage
+% \input{97_bildnachweis}
+
+%%Abkürzungs- und Symbolverzeichnis
+% \clearpage
+% \input{98_symbole_abk}
+
+%Abbildungsverzeichnis
+% \clearpage
+% \addcontentsline{toc}{section}{\listfigurename}
+% \listoffigures
+
+%Tabellenverzeichnis
+% \clearpage
+% \addcontentsline{toc}{section}{\listtablename}
+% \listoftables
+
+%Anhang
+%Ausführliche Datentabellen, umfangreiche Fließbilder und lange Berechnungen können in den Anhang
+%\clearpage
+%\appendix
+%\input{99_anhang}
+
+\end{document}

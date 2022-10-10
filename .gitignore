@@ -1,3 +1,5 @@
-.vscode/
-.ipynb_checkpoints
-
+*.svg
+*.png
+*__pycache__*
+*.pyc
+gurobi.log

@@ -1,5 +1,15 @@
 # Research Journal
 
+## 16/10/2020
+- I included a binary variable to guarantee that the battery bidirectional inverter is charging XOR discharging.
+- I checked the CREG price algorithm and found a discrepancy. The formula asks for a power curve, but currently it is presented as a percentage. I fixed this by using the maximum load power value as 100% of the typical load curve. This chenges the price of the energy price computation. I still have to figure out how to correctly compute this.
+
+## 23/10/2020
+I changed the code structure by preparing functions that solve the optimization problem and present the results in a figure. This will allow us to solve the problem for multiple scenarios and show a comparison of the results.
+TODO:
+- [ ] Check if solutions where the battery charge and discharge power are equal but nonzero are correct. Ask Adrian why two signals are used in this case.
+- [ ] Ask Adrian why the constraint Pd \leq Pl is included.
+
 ## 09/10/2020
 - comparación de la normativa actual con el excel (propuesta alternativa a la 015)
 - organizar código en el repositorio
@@ -23,7 +33,7 @@ We have different tests that can be evaluated:
 - [x] Quitar load shifting. El incentivo es el precio
 - Venta de servicios adicionales: remuneración por subir o bajar la demanda.
 - Control de frecuencia: 60Hz. AGC: plantas que ofrecen mover la generación hacia arriba o abajo para mantener la frecuencia alrededor de 60 Hz. Permitir al usuario final participar en éste mercado. Agregadores que reunan paquetes de usuarios finales para participar en el mercado.
-  1.  Alternativa 1: Explicar que los paquetes deben ser grandes para prestar el servicio. Nuestro modelo podría tomar la señal del agregador para participar
+  1. Alternativa 1: Explicar que los paquetes deben ser grandes para prestar el servicio. Nuestro modelo podría tomar la señal del agregador para participar
   2. Alternativa 2: Servicio auxiliar (no frecuencia). Variaciones para resolver problemas al operador de red (Codensa). Aliviar problemas de congestión, mejorar perfiles de distribución. Paquetes más pequeños.
 - Keywords: Prosumer (consumidor que produce), frequency service.
 - Papers de referencia:
