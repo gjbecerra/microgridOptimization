@@ -1,5 +1,38 @@
 # Research Journal
 
+## 09/10/2020
+- comparación de la normativa actual con el excel (propuesta alternativa a la 015)
+- organizar código en el repositorio
+- Próxima reunión: viernes 2:30pm
+
+## 29/06/2020
+Write paper:
+- [ ] Prepare a description of the mathematical model.
+- [ ] Define which tests will be included.
+- [ ] Prepare the python script to run these tests.
+We have different tests that can be evaluated:
+	- Compute the energy price for a given load curve using a fixed unit price.
+	- Compute the energy price using the CREG
+	- Compute the energy price using a weighted relation of market price and network usage.
+	- Use the market price.
+
+## 28/05/2020
+### Reunión con Adrián:
+- [x] Costo unitario: 550$/kW.  
+- [ ] Comparar con el problema base con el costo unitario sin optimización.  
+- [x] Quitar load shifting. El incentivo es el precio
+- Venta de servicios adicionales: remuneración por subir o bajar la demanda.
+- Control de frecuencia: 60Hz. AGC: plantas que ofrecen mover la generación hacia arriba o abajo para mantener la frecuencia alrededor de 60 Hz. Permitir al usuario final participar en éste mercado. Agregadores que reunan paquetes de usuarios finales para participar en el mercado.
+  1.  Alternativa 1: Explicar que los paquetes deben ser grandes para prestar el servicio. Nuestro modelo podría tomar la señal del agregador para participar
+  2. Alternativa 2: Servicio auxiliar (no frecuencia). Variaciones para resolver problemas al operador de red (Codensa). Aliviar problemas de congestión, mejorar perfiles de distribución. Paquetes más pequeños.
+- Keywords: Prosumer (consumidor que produce), frequency service.
+- Papers de referencia:
+  - P. Olivella-Rosell, E. Bullich-Massagué, M. Aragüés-Peñalba, A. Sumper,
+  S. Ødegaard Ottesen, J.-A. Vidal-Clos, and R. Villafáfila-Robles, “Optimization problem for meeting distribution system operator requests
+  in local flexibility markets with distributed energy resources,” Applied
+  Energy, vol. 210, pp. 881 – 895, 2018. [Online].
+  - Otros del mismo autor.
+
 ## 08/05/2020
 I checked again in detail the file `PreciosHorarios.xlsx` provided by Adrián to understand the computations performed to obtain the energy prices. The basic idea is to compute the total price based on two components: market price and network usage. The variables can be defined as follows:
 1. Load Power Forecast [kW]: $p_l(k)$
@@ -13,6 +46,7 @@ The formula for obtaining the total price is:
 $$c_t(k) = \frac{c_u}{2}\left[\left(\frac{c_m(k)}{\bar{c}_m}\right) + \left(\frac{p_n(k)}{\bar{p}_n}\right)\right]$$
 
 After checking the results, it seems that the basic idea is to obtain a dynamic pricing scheme that in average yields the unit energy price.
+
 TODO:
 - [x] Compute the average market price for the current year.
 - [x] Compute the average net power flow for the current year.
