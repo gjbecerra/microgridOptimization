@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import datetime
 
+# Set pyplot backend
+plt.switch_backend('TkAgg')
 
 # Function for reading data from simple example data
 def readExampleData(label):
@@ -149,11 +151,15 @@ def optimalSolutionScenario1(Pl, Ppv, Cd):
         Pdch_sol = m.getAttr('x', Pdch)
         Es_sol = m.getAttr('x', Es)
 
+        Pd_res   =  list(Pd_sol.values())
+        Pch_res  =  list(Pch_sol.values())
+        Pdch_res =  list(Pdch_sol.values())
+        Es_res   =  list(Es_sol.values())
+        
         # Appends the last value to show the last hour in the step plot
-        Pd_res   =  Pd_sol.values()   + [Pd_sol.values()[-1]]
-        Pch_res  =  Pch_sol.values()  + [Pch_sol.values()[-1]]
-        Pdch_res =  Pdch_sol.values() + [Pdch_sol.values()[-1]]
-        Es_res   =  Es_sol.values()
+        Pd_res.append(Pd_res[-1])
+        Pch_res.append(Pch_res[-1])
+        Pdch_res.append(Pdch_res[-1])
 
         # Gets the total cost as the optimal value of the objective function
         totalCost = m.objVal
@@ -242,12 +248,17 @@ def optimalSolutionScenario2(Pl, Ppv, Cd):
         Pcut_sol = m.getAttr('x',Pcut)
 
         # Appends the last value to show the last hour in the step plot
-        Pd_res   =  Pd_sol.values()   + [Pd_sol.values()[-1]]
-        Pch_res  =  Pch_sol.values()  + [Pch_sol.values()[-1]]
-        Pdch_res =  Pdch_sol.values() + [Pdch_sol.values()[-1]]
-        Es_res   =  Es_sol.values()
-        Psh_res  =  Psh_sol.values()  + [Psh_sol.values()[-1]]
+        Pd_res   =  list(Pd_sol.values())
+        Pch_res  =  list(Pch_sol.values())
+        Pdch_res =  list(Pdch_sol.values())
+        Es_res   =  list(Es_sol.values())
+        Psh_res  =  list(Psh_sol.values())
         Pcut_res  =  Pcut_sol
+
+        Pd_res.append(Pd_res[-1])
+        Pch_res.append(Pch_res[-1])
+        Pdch_res.append(Pdch_res[-1])
+        Psh_res.append(Psh_res[-1])
 
         totalCost = m.objVal
         
@@ -284,8 +295,8 @@ def prepareFigureScenario1(loadDate, totalCost, Cd, Ppv, Pl, Pd, Pch, Pdch, Es, 
     axs[0].step(range(25),Cd + [Cd[-1]], where='post')
     axs[0].legend(["Cd"],loc='upper left')
     axs[0].minorticks_on()
-    axs[0].grid(b=True, which='major', color='darkgray', linestyle='-')
-    axs[0].grid(b=True, which='minor', color='lightgray', linestyle='--')
+    # axs[0].grid(b=True, which='major', color='darkgray', linestyle='-')
+    # axs[0].grid(b=True, which='minor', color='lightgray', linestyle='--')
     axs[0].set_ylabel('Costo [$]')
     axs[0].set_xlim([0,24])
     loadCurve = typicalLoadCurve + [typicalLoadCurve[-1]]
@@ -301,16 +312,16 @@ def prepareFigureScenario1(loadDate, totalCost, Cd, Ppv, Pl, Pd, Pch, Pdch, Es, 
     axs[1].step(range(25),Pl + [Pl[-1]], where='post', linestyle='--')
     axs[1].legend(["Pd", "Ppv", "Pl"], loc="upper left", ncol=3) 
     axs[1].minorticks_on()
-    axs[1].grid(b=True, which='major', color='darkgray', linestyle='-')
-    axs[1].grid(b=True, which='minor', color='lightgray', linestyle='--')
+    # axs[1].grid(b=True, which='major', color='darkgray', linestyle='-')
+    # axs[1].grid(b=True, which='minor', color='lightgray', linestyle='--')
     axs[1].set_ylabel('Potencia [kW]')
     axs[1].set_xlim([0,24])
     axs[2].step(range(25),Pch, where='post', linestyle='-')
     axs[2].step(range(25),Pdch, where='post', linestyle='-')
     axs[2].legend(["Pch", "Pdch"], loc='upper left', ncol=2) 
     axs[2].minorticks_on()
-    axs[2].grid(b=True, which='major', color='darkgray', linestyle='-')
-    axs[2].grid(b=True, which='minor', color='lightgray', linestyle='--')
+    # axs[2].grid(b=True, which='major', color='darkgray', linestyle='-')
+    # axs[2].grid(b=True, which='minor', color='lightgray', linestyle='--')
     axs[2].set_xlabel('Tiempo [h]')
     axs[2].set_ylabel('Potencia [kW]')
     axs[2].set_xlim([0,24])
@@ -343,8 +354,8 @@ def prepareFigureScenario2(loadDate, totalCost, Cd, Ppv, Pl, Pd, Pch, Pdch, Es, 
     axs[0].step(range(25),Cd + [Cd[-1]], where='post')
     axs[0].legend(["Cd"],loc='upper left')
     axs[0].minorticks_on()
-    axs[0].grid(b=True, which='major', color='darkgray', linestyle='-')
-    axs[0].grid(b=True, which='minor', color='lightgray', linestyle='--')
+    # axs[0].grid(b=True, which='major', color='darkgray', linestyle='-')
+    # axs[0].grid(b=True, which='minor', color='lightgray', linestyle='--')
     axs[0].set_ylabel('Costo [$]')
     axs[0].set_xlim([0,24])
     loadCurve = typicalLoadCurve + [typicalLoadCurve[-1]]
@@ -361,8 +372,8 @@ def prepareFigureScenario2(loadDate, totalCost, Cd, Ppv, Pl, Pd, Pch, Pdch, Es, 
     axs[1].step(range(25),loadPower + [loadPower[-1]], where='post', linestyle='--')
     axs[1].legend(["Pd", "Ppv", "Pl", "Pl+Psh-sum(Pcut_i)"], loc="best", ncol=4)
     axs[1].minorticks_on()
-    axs[1].grid(b=True, which='major', color='darkgray', linestyle='-')
-    axs[1].grid(b=True, which='minor', color='lightgray', linestyle='--')
+    # axs[1].grid(b=True, which='major', color='darkgray', linestyle='-')
+    # axs[1].grid(b=True, which='minor', color='lightgray', linestyle='--')
     axs[1].set_ylabel('Potencia [kW]')
     axs[1].set_xlim([0,24])
     axs[2].step(range(25),Psh, where='post', linestyle='-')
@@ -371,8 +382,8 @@ def prepareFigureScenario2(loadDate, totalCost, Cd, Ppv, Pl, Pd, Pch, Pdch, Es, 
     axs[2].step(range(24),list(Pcut[2,t] for t in range(24)), where='post', linestyle=':')
     axs[2].legend(["Psh", "Pcut1", "Pcut2", "Pcut3"], loc='best', ncol=4)
     axs[2].minorticks_on()
-    axs[2].grid(b=True, which='major', color='darkgray', linestyle='-')
-    axs[2].grid(b=True, which='minor', color='lightgray', linestyle='--')
+    # axs[2].grid(b=True, which='major', color='darkgray', linestyle='-')
+    # axs[2].grid(b=True, which='minor', color='lightgray', linestyle='--')
     axs[2].set_xlabel('Tiempo [h]')
     axs[2].set_ylabel('Potencia [kW]')
     axs[2].set_xlim([0,24])
@@ -380,8 +391,8 @@ def prepareFigureScenario2(loadDate, totalCost, Cd, Ppv, Pl, Pd, Pch, Pdch, Es, 
     axs[3].step(range(25),Pdch, where='post', linestyle='-')
     axs[3].legend(["Pch", "Pdch"], loc='upper left', ncol=2)
     axs[3].minorticks_on()
-    axs[3].grid(b=True, which='major', color='darkgray', linestyle='-')
-    axs[3].grid(b=True, which='minor', color='lightgray', linestyle='--')
+    # axs[3].grid(b=True, which='major', color='darkgray', linestyle='-')
+    # axs[3].grid(b=True, which='minor', color='lightgray', linestyle='--')
     axs[3].set_ylabel('Potencia [kW]')
     axs[3].set_xlim([0,24])
     axs3b = axs[3].twinx()

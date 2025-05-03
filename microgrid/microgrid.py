@@ -35,13 +35,13 @@ totalCostCreg  = sum([priceCreg[t] * loadPower[t] for t in range(24)])
 # Scenario 1: System with battery storage and photovoltaic generation but no demand response scheme
 optimSolFound1, Pd1, Pch1, Pdch1, Es1, totalCost1 = optimalSolutionScenario1(loadPower, pvPower, priceCreg)
 if optimSolFound1:
-    exportResults("scenario1.csv",Pch1, Pdch1, Pd1)
+    # exportResults("scenario1.csv",Pch1, Pdch1, Pd1)
     prepareFigureScenario1(loadDate, totalCost1, priceCreg, pvPower, loadPower, Pd1, Pch1, Pdch1, Es1, typicalLoadCurve)
 
 # Scenario 2: System with battery storage and photovoltaic generation and demand response scheme
 optimSolFound2, Pd2, Pch2, Pdch2, Es2, Psh, Pcut, totalCost2 = optimalSolutionScenario2(loadPower, pvPower, priceCreg)
 if optimSolFound2:
-    exportResults("scenario2.csv",Pch2, Pdch2, Pd2)
+    # exportResults("scenario2.csv",Pch2, Pdch2, Pd2)
     prepareFigureScenario2(loadDate, totalCost2, priceCreg, pvPower, loadPower, Pd2, Pch2, Pdch2, Es2, Psh, Pcut, typicalLoadCurve)
 
 # Selects the type of energy price computation
